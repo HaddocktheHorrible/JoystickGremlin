@@ -343,6 +343,9 @@ class NumericalVariable(AbstractVariable):
         elif self.variable_type == common.PluginVariableType.Float:
             value_widget = QtWidgets.QDoubleSpinBox()
             value_widget.setValue(float(value))
+            value_widget.setMaximum(float(self.max_value)) # fix for widget not matching assigned float max
+            value_widget.setMinimum(float(self.min_value)) # fix for widget not matching assigned float min
+            value_widget.setValue(float(value))
             value_widget.valueChanged.connect(
                 lambda x: self.value_changed.emit({"value": x})
             )
