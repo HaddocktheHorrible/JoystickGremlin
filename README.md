@@ -45,7 +45,19 @@ Currently the 32bit version of Python is needed and the following packages shoul
  - PyQT5
  - pypiwin32
  
+Update:
 
+Looks like he relies on a bunch of stuff that isn't properly configured in the environment. These are the steps needed to create the environment from scratch:
+
+```
+conda create -n joystick_gremlin32 python=3.6
+conda activate joystick_gremlin32
+conda config --env --set subdir win-32 # this sets the env platform to win 32-bit
+conda install python=3.6  # this re-installs 32-bit python 3.6
+pip install pyqt5
+pip install pypiwin32
+conda install reportlab   # needed for the cheatsheet
+```
 Generating the MSI Installer
 ----------------------------
 
@@ -63,3 +75,5 @@ following command can be used:
   ```
   pyinstaller -y --clean joystick_gremlin.spec
   ```
+
+Missing a bunch of modules this way. Unclear if they need to be installed manually - try again tomorrow.
