@@ -329,9 +329,6 @@ class JoystickDeviceTabWidget(QtWidgets.QWidget):
         vjoy_as_input = self.device_profile.parent.settings.vjoy_as_input
 
         # For vJoy as output only show axes entries, for all others treat them
-        # as if they were physical input devices
-        if device.is_virtual and not vjoy_as_input.get(device.vjoy_id, False):
-            self.input_item_list_view.limit_input_types([InputType.JoystickAxis])
         self.input_item_list_view.set_model(self.input_item_list_model)
 
         # TODO: make this saner
