@@ -555,6 +555,7 @@ class AbstractInputSelector(QtWidgets.QWidget):
         self._initialize()
         self._create_device_dropdown()
         self._create_input_dropdown()
+        self._create_description_display()
 
     def get_selection(self):
         device_id = None
