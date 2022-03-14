@@ -105,7 +105,7 @@
         </mxGraphModel>
     </diagram>
     <diagram id="vsScIIZ4IsDqN_tUuhnS" name="remap-trace">
-        <mxGraphModel dx="2397" dy="2216" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+        <mxGraphModel dx="1864" dy="1859" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
             <root>
                 <mxCell id="wiyk_obPWAMqVCxUTnyU-0"/>
                 <mxCell id="wiyk_obPWAMqVCxUTnyU-1" parent="wiyk_obPWAMqVCxUTnyU-0"/>
@@ -195,6 +195,9 @@
                 </mxCell>
                 <mxCell id="KnK0IX_QrnDaFBINUJWb-5" value="child of" style="edgeStyle=none;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;startArrow=none;startFill=0;" edge="1" parent="qoOMcaosIMal-A_zUVmE-4" source="0L07xiwlfYV3X-lXR-MY-0" target="iQmWfz232k3y5SZrgUpE-0">
                     <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="KnK0IX_QrnDaFBINUJWb-7" value="Seems like RemapFunctor will remain unchanged as long as Remap contains a vjoy_device and vjoy_input... missing link seems to be due to how functors are only created during execution" style="shape=callout;whiteSpace=wrap;html=1;perimeter=calloutPerimeter;size=30;position=0.42;base=20;position2=0;" vertex="1" parent="qoOMcaosIMal-A_zUVmE-4">
+                    <mxGeometry x="260" y="200" width="170" height="150" as="geometry"/>
                 </mxCell>
                 <mxCell id="Ek27Qv-gz2OvY15RN3xa-1" style="edgeStyle=none;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;startArrow=classic;startFill=1;" edge="1" parent="wiyk_obPWAMqVCxUTnyU-1" source="Ek27Qv-gz2OvY15RN3xa-0" target="qoOMcaosIMal-A_zUVmE-0">
                     <mxGeometry relative="1" as="geometry"/>
