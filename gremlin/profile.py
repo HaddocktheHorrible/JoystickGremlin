@@ -1937,7 +1937,7 @@ class InputItem:
             node.set("description", "")
             
         if self.binding:
-            node.set("binding", safe_format(self.description, str))
+            node.set("binding", safe_format(self.binding, str))
         else:
             node.set("binding", "")
 
