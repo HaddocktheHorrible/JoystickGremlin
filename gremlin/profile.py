@@ -1889,6 +1889,7 @@ class InputItem:
         self.input_id = None
         self.always_execute = False
         self.description = ""
+        self.binding = ""
         self.containers = []
 
     def from_xml(self, node):
@@ -1900,6 +1901,7 @@ class InputItem:
         self.input_type = InputType.to_enum(node.tag)
         self.input_id = safe_read(node, "id", int)
         self.description = safe_read(node, "description", str)
+        self.binding = safe_read(node, "binding", str)
         self.always_execute = read_bool(node, "always-execute", False)
         if self.input_type == InputType.Keyboard:
             self.input_id = (self.input_id, read_bool(node, "extended"))
@@ -1933,6 +1935,11 @@ class InputItem:
             node.set("description", safe_format(self.description, str))
         else:
             node.set("description", "")
+            
+        if self.binding:
+            node.set("binding", safe_format(self.description, str))
+        else:
+            node.set("binding", "")
 
         for entry in self.containers:
             if entry.is_valid():
