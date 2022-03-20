@@ -32,8 +32,9 @@ class InputItemConfiguration(QtWidgets.QFrame):
     input item such as an axis, button, hat, or key.
     """
 
-    # Signal emitted when the description changes
+    # Signal emitted when the description or binding changes
     description_changed = QtCore.pyqtSignal(str)
+    binding_changed = QtCore.pyqtSignal(str)
 
     def __init__(self, item_data, parent=None):
         """Creates a new object instance.
