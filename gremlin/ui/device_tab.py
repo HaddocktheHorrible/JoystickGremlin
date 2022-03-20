@@ -51,6 +51,7 @@ class InputItemConfiguration(QtWidgets.QFrame):
         self.widget_layout = QtWidgets.QVBoxLayout()
 
         self._create_description()
+        self._create_binding()
         if self.item_data.parent.parent.type == gremlin.common.DeviceType.VJoy:
             self._create_vjoy_dropdowns()
         else:
@@ -113,6 +114,19 @@ class InputItemConfiguration(QtWidgets.QFrame):
         self.description_layout.addWidget(self.description_field)
 
         self.main_layout.addLayout(self.description_layout)
+        
+    def _create_binding(self):
+        """Creates the binding input for the input item."""
+        self.binding_layout = QtWidgets.QHBoxLayout()
+        self.binding_layout.addWidget(
+            QtWidgets.QLabel("<b>Action Binding</b>")
+        )
+        self.binding_field = QtWidgets.QLineEdit()
+        self.binding_field.setText(self.item_data.binding)
+        self.binding_field.textChanged.connect(self._edit_binding_cb)
+        self.binding_layout.addWidget(self.binding_field)
+
+        self.main_layout.addLayout(self.binding_layout)
 
     def _create_dropdowns(self):
         """Creates a drop down selection with actions that can be
@@ -155,6 +169,14 @@ class InputItemConfiguration(QtWidgets.QFrame):
         """
         self.item_data.description = text
         self.description_changed.emit(text)
+        
+    def _edit_binding_cb(self, text):
+        """Handles changes to the binding text field.
+
+        :param text the new contents of the text field
+        """
+        self.item_data.binding = text
+        self.binding_changed.emit(text)
 
     def _always_execute_cb(self, state):
         """Handles changes to the always execute checkbox.
@@ -392,6 +414,7 @@ class JoystickDeviceTabWidget(QtWidgets.QWidget):
             change_cb = self._create_change_cb(index)
             widget.action_model.data_changed.connect(change_cb)
             widget.description_changed.connect(change_cb)
+            widget.binding_changed.connect(change_cb)
 
             self.main_layout.addWidget(widget)
 
@@ -535,6 +558,7 @@ class KeyboardDeviceTabWidget(QtWidgets.QWidget):
         change_cb = self._create_change_cb(self._index_for_key(index_key))
         widget.action_model.data_changed.connect(change_cb)
         widget.description_changed.connect(change_cb)
+        widget.binding_changed.connect(change_cb)
 
         self.main_layout.addWidget(widget)
 
