@@ -1314,6 +1314,7 @@ class Profile:
         self.plugins = []
         self.settings = Settings(self)
         self.parent = None
+        self._bound_vjoys_in_current_mode = {}
 
     def initialize_joystick_device(self, device, modes):
         """Ensures a joystick is properly initialized in the profile.
@@ -1614,7 +1615,37 @@ class Profile:
                     device.type = DeviceType.Keyboard
                 self.devices[device_guid] = device
             return self.devices[device_guid]
+        
+    def mode_changed_cb(self, mode):
+        """Handles mode change.
 
+        Updates stored binding list to match new mode.
+        
+        Args:
+            mode (_type_): _description_
+        """        
+        # TODO: implement this
+        # loop over all vjoy devices
+        #   get matching "mode" for device
+        #       for each input item in mode.all_input_items
+        #           add input device to list if it has a binding, use bind as dict key
+        
+        self._bound_vjoys_in_current_mode = {}
+        for dev in self.vjoy_devices.values():
+            dev.ensure_mode_exists(mode)
+            for item in dev.modes[mode].all_input_items:
+                 if (item.binding):
+                     # get dev id
+                     # todo: look to list_unused_vjoy_inputs to find vjoy id from dev
+                     self._bound_vjoys_in_current_mode[item.binding].append((vjoy_id,item.input_id))
+    
+    def get_vjoy_from_binding(self, binding):
+        """Returns VJoy device & input associated with binding
+
+        :param binding the binding assigned to desired VJoy input
+        """        
+        return self._bound_vjoys_in_current_mode[binding]
+    
     def empty(self):
         """Returns whether or not a profile is empty.
 
@@ -1672,7 +1703,6 @@ class Profile:
             }
 
         return entry
-
 
 class Device:
 
