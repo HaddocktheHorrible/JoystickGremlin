@@ -3,7 +3,7 @@
         <mxGraphModel dx="1407" dy="1623" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
-                <mxCell id="1" value="Existing function" style="" parent="0"/>
+                <mxCell id="1" value="Existing function" style="locked=1;" parent="0"/>
                 <mxCell id="29" value="UI Layer" style="swimlane;horizontal=0;fillColor=#e3c800;fontColor=#000000;strokeColor=#B09500;fontFamily=Lucida Console;" parent="1" vertex="1">
                     <mxGeometry x="-670" y="-840" width="3100" height="950" as="geometry"/>
                 </mxCell>
@@ -179,7 +179,7 @@
         </mxGraphModel>
     </diagram>
     <diagram id="vsScIIZ4IsDqN_tUuhnS" name="remap-trace">
-        <mxGraphModel dx="1993" dy="1567" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+        <mxGraphModel dx="1327" dy="1549" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
             <root>
                 <mxCell id="wiyk_obPWAMqVCxUTnyU-0"/>
                 <mxCell id="wiyk_obPWAMqVCxUTnyU-1" value="Existing Function" style="locked=1;" parent="wiyk_obPWAMqVCxUTnyU-0"/>
@@ -280,7 +280,7 @@
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="qoOMcaosIMal-A_zUVmE-1" value="Repository Layer" style="swimlane;horizontal=0;fillColor=#0050ef;fontColor=#ffffff;strokeColor=#001DBC;fontStyle=4;fontFamily=Lucida Console;" parent="wiyk_obPWAMqVCxUTnyU-1" vertex="1">
-                    <mxGeometry x="-690" y="210" width="980" height="430" as="geometry"/>
+                    <mxGeometry x="-690" y="210" width="980" height="740" as="geometry"/>
                 </mxCell>
                 <mxCell id="qoOMcaosIMal-A_zUVmE-0" value="&lt;p style=&quot;margin: 4px 0px 0px; text-align: center; color: rgb(0, 0, 0);&quot;&gt;#Remap&amp;nbsp;&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin: 0px 0px 0px 4px; color: rgb(0, 0, 0);&quot;&gt;axis_mode : str&lt;br&gt;axis_scaling : float&lt;br&gt;default_button_activation : tuple&lt;br&gt;functor&lt;br&gt;input_type&lt;br&gt;input_types : list&lt;br&gt;name : str&lt;br&gt;tag : str&lt;br&gt;vjoy_device_id : NoneType&lt;br&gt;vjoy_input_id : NoneType&lt;br&gt;widget&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin: 0px 0px 0px 4px; color: rgb(0, 0, 0);&quot;&gt;__init__(parent)&lt;br&gt;_generate_xml()&lt;br&gt;_is_valid()&lt;br&gt;_parse_xml(node)&lt;br&gt;icon()&lt;br&gt;requires_virtual_button()&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeColor=black;strokeWidth=1;fillColor=#ffffff;fontFamily=Lucida Console;" parent="qoOMcaosIMal-A_zUVmE-1" vertex="1">
                     <mxGeometry x="120" y="40" width="198.73" height="326.39999999999964" as="geometry"/>
@@ -288,17 +288,20 @@
                 <mxCell id="Ek27Qv-gz2OvY15RN3xa-2" value="Stores remap data at runtime" style="shape=callout;whiteSpace=wrap;html=1;perimeter=calloutPerimeter;size=30;position=0.42;base=20;position2=0;fontFamily=Lucida Console;" parent="qoOMcaosIMal-A_zUVmE-1" vertex="1">
                     <mxGeometry x="299.37" y="30" width="120" height="90" as="geometry"/>
                 </mxCell>
-                <mxCell id="Ek27Qv-gz2OvY15RN3xa-6" value="Who owns each remap? Mode?" style="ellipse;shape=cloud;whiteSpace=wrap;html=1;fillColor=#1ba1e2;fontColor=#ffffff;strokeColor=#006EAF;fontFamily=Lucida Console;" parent="qoOMcaosIMal-A_zUVmE-1" vertex="1">
-                    <mxGeometry x="289.37" y="270" width="130" height="110" as="geometry"/>
-                </mxCell>
                 <mxCell id="KnK0IX_QrnDaFBINUJWb-4" value="base_classes" style="swimlane;strokeColor=#663300;fillColor=#FF8000;fontFamily=Lucida Console;" parent="qoOMcaosIMal-A_zUVmE-1" vertex="1">
-                    <mxGeometry x="520" y="80" width="320" height="280" as="geometry"/>
+                    <mxGeometry x="520.01" y="50" width="320" height="230" as="geometry"/>
                 </mxCell>
                 <mxCell id="ybT-x4VRDriQRHw-l4KJ-0" value="&lt;p style=&quot;margin: 4px 0px 0px; text-align: center; color: rgb(0, 0, 0);&quot;&gt;#AbstractAction&amp;nbsp;&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin: 0px 0px 0px 4px; color: rgb(0, 0, 0);&quot;&gt;activation_condition : NoneType&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin: 0px 0px 0px 4px; color: rgb(0, 0, 0);&quot;&gt;__init__(parent)&lt;br&gt;from_xml(node)&lt;br&gt;icon()&lt;br&gt;requires_virtual_button()&lt;br&gt;to_xml()&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeColor=black;strokeWidth=1;fillColor=#ffffff;fontFamily=Lucida Console;" parent="KnK0IX_QrnDaFBINUJWb-4" vertex="1">
                     <mxGeometry x="59.47000000000003" y="52.400000000000006" width="201.06" height="141.60000000000002" as="geometry"/>
                 </mxCell>
                 <mxCell id="KnK0IX_QrnDaFBINUJWb-6" value="child_of" style="edgeStyle=none;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;startArrow=none;startFill=0;fontFamily=Lucida Console;" parent="qoOMcaosIMal-A_zUVmE-1" source="ybT-x4VRDriQRHw-l4KJ-0" target="qoOMcaosIMal-A_zUVmE-0" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="4yc--25649zTDxxO4i3K-1" value="Owned by containers,which are then&amp;nbsp;&lt;br&gt;owned by InputItems, etc." style="shape=callout;whiteSpace=wrap;html=1;perimeter=calloutPerimeter;size=30;position=0.42;base=20;position2=0;fontFamily=Lucida Console;" vertex="1" parent="qoOMcaosIMal-A_zUVmE-1">
+                    <mxGeometry x="310" y="190" width="120" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="4yc--25649zTDxxO4i3K-0" value="&lt;p style=&quot;margin: 4px 0px 0px ; text-align: center ; font-size: 10px ; color: rgb(0 , 0 , 0)&quot;&gt;#Profile&amp;nbsp;&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin: 0px 0px 0px 4px ; font-size: 10px ; color: rgb(0 , 0 , 0)&quot;&gt;devices : dict&lt;br&gt;merge_axes : list&lt;br&gt;parent : NoneType&lt;br&gt;plugins : list&lt;br&gt;settings&lt;br&gt;vjoy_devices : dict&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin: 0px 0px 0px 4px ; font-size: 10px ; color: rgb(0 , 0 , 0)&quot;&gt;__init__()&lt;br&gt;_parse_merge_axis(node)&lt;br&gt;build_inheritance_tree()&lt;br&gt;empty()&lt;br&gt;from_xml(fname)&lt;br&gt;get_device_modes(device_guid, device_type, device_name)&lt;br&gt;get_root_modes()&lt;br&gt;initialize_joystick_device(device, modes)&lt;br&gt;list_unused_vjoy_inputs()&lt;br&gt;to_xml(fname)&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeColor=black;strokeWidth=1;fillColor=#ffffff;fontFamily=Lucida Console;" vertex="1" parent="qoOMcaosIMal-A_zUVmE-1">
+                    <mxGeometry x="503.3000000000001" y="350" width="353.40999999999985" height="309.59999999999997" as="geometry"/>
                 </mxCell>
                 <mxCell id="qoOMcaosIMal-A_zUVmE-4" value="Domain / Function Model" style="swimlane;horizontal=0;fontStyle=4;fontFamily=Lucida Console;" parent="wiyk_obPWAMqVCxUTnyU-1" vertex="1">
                     <mxGeometry x="380" y="210" width="980" height="430" as="geometry"/>
@@ -322,17 +325,20 @@
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="Ek27Qv-gz2OvY15RN3xa-0" value="profile.xml&lt;br&gt;(Database)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#6a00ff;fontColor=#ffffff;strokeColor=#3700CC;fontFamily=Lucida Console;" parent="wiyk_obPWAMqVCxUTnyU-1" vertex="1">
-                    <mxGeometry x="-550.63" y="730" width="160" height="110" as="geometry"/>
+                    <mxGeometry x="-550.63" y="980" width="160" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="4yc--25649zTDxxO4i3K-2" value="Provides list of unused vjoy inputs for vjoy selector creation" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.999;exitY=0.679;exitDx=0;exitDy=0;fontFamily=Lucida Console;exitPerimeter=0;" edge="1" parent="wiyk_obPWAMqVCxUTnyU-1" source="4yc--25649zTDxxO4i3K-0" target="EeACrGJ782G6iDxxrMq0-0">
+                    <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="0JovUN-RgkIPuKfJua8Y-0" value="Mods notes" parent="wiyk_obPWAMqVCxUTnyU-0"/>
-                <mxCell id="pK5_K27OLJdyoUqwKpdf-0" value="Add binding dropdown creator&lt;br&gt;Support binding selection" style="shape=callout;whiteSpace=wrap;html=1;perimeter=calloutPerimeter;fontFamily=Lucida Console;fillColor=#6a00ff;fontColor=#ffffff;strokeColor=#3700CC;position2=0.92;" vertex="1" parent="0JovUN-RgkIPuKfJua8Y-0">
+                <mxCell id="pK5_K27OLJdyoUqwKpdf-0" value="Add binding dropdown creator&lt;br&gt;Support binding selection" style="shape=callout;whiteSpace=wrap;html=1;perimeter=calloutPerimeter;fontFamily=Lucida Console;fillColor=#6a00ff;fontColor=#ffffff;strokeColor=#3700CC;position2=0.92;" parent="0JovUN-RgkIPuKfJua8Y-0" vertex="1">
                     <mxGeometry x="-610" y="-640" width="150" height="110" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>
     </diagram>
     <diagram id="mr_mdXBg1DZPY689ZHL0" name="profile">
-        <mxGraphModel dx="4715" dy="537" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+        <mxGraphModel dx="3901" dy="471" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
             <root>
                 <mxCell id="L2Rh11Mj4o6XcxZUxk_e-0"/>
                 <mxCell id="L2Rh11Mj4o6XcxZUxk_e-1" parent="L2Rh11Mj4o6XcxZUxk_e-0"/>
