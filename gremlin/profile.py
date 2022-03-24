@@ -1633,11 +1633,18 @@ class Profile:
         self._bound_vjoys_in_current_mode = {}
         for dev in self.vjoy_devices.values():
             dev.ensure_mode_exists(mode)
+            # get vjoy id from dev?
+            # remap numbers vjoys, but this is different from 
+            # figure out how remap pulls list here
             for item in dev.modes[mode].all_input_items:
-                 if (item.binding):
-                     # get dev id
+                # can't use all_input_items here, only gives indices
+                # need to loop over input_types and then input_items within type
+                if (item.binding):
                      # todo: look to list_unused_vjoy_inputs to find vjoy id from dev
                      self._bound_vjoys_in_current_mode[item.binding].append((vjoy_id,item.input_id))
+                     # return dict of input type with each entry as vjoy_id, index tuple
+                     # or dict with two entries: vjoy_device_id, vjoy_input_id
+                     # allows remap to pre-filter by input type for binding list
     
     def get_vjoy_from_binding(self, binding):
         """Returns VJoy device & input associated with binding
