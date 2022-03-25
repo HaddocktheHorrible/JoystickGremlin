@@ -1624,11 +1624,6 @@ class Profile:
         Args:
             mode (_type_): _description_
         """        
-        # TODO: implement this
-        # loop over all vjoy devices
-        #   get matching "mode" for device
-        #       for each input item in mode.all_input_items
-        #           add input device to list if it has a binding, use bind as dict key
         
         # List all input types
         all_input_types = [
@@ -1641,21 +1636,15 @@ class Profile:
         # loop over devices and input items within mode
         # borrows approach from `list_unused_vjoy_inputs`
         self._bound_vjoys_in_current_mode = {}
-        for dev in self.vjoy_devices.values():
+        for vjoy_guid, dev in self.vjoy_devices.items():
             dev.ensure_mode_exists(mode)
-            # remap pulls vjoy_id from device, but this isn't stored in the profile?
-            # might just be the index in the list...
-            # vjoy_id = dev.vjoy_id
+            vjoy_id = joystick_handling.vjoy_id_from_guid(vjoy_guid)
             for input_type in all_input_types:
                 for item in mode.config[input_type].values():
                     if (item.binding):
                         # TODO: ignore binding if it begins with a hash '#' symbol
-                        # todo: look to list_unused_vjoy_inputs to find vjoy id from dev
-                        self._bound_vjoys_in_current_mode[item.binding]["device_id"] = vjoy_id
-                        self._bound_vjoys_in_current_mode[item.binding]["input_id"] = item.input_id
-                        # return dict of input type with each entry as vjoy_id, index tuple
-                        # or dict with two entries: vjoy_device_id, vjoy_input_id
-                        # allows remap to pre-filter by input type for binding list
+                        self._bound_vjoys_in_current_mode[input_type][item.binding]["device_id"] = vjoy_id
+                        self._bound_vjoys_in_current_mode[input_type][item.binding]["input_id"] = item.input_id
     
     def get_vjoy_from_binding(self, binding):
         """Returns VJoy device & input associated with binding
