@@ -1616,13 +1616,12 @@ class Profile:
                 self.devices[device_guid] = device
             return self.devices[device_guid]
         
-    def mode_changed_cb(self, mode):
+    def mode_changed_cb(self, new_mode):
         """Handles mode change.
 
         Updates stored binding list to match new mode.
         
-        Args:
-            mode (_type_): _description_
+        :param new_mode the name of the new current mode
         """        
         
         # List all input types
@@ -1637,10 +1636,10 @@ class Profile:
         # borrows approach from `list_unused_vjoy_inputs`
         self._bound_vjoys_in_current_mode = {}
         for vjoy_guid, dev in self.vjoy_devices.items():
-            dev.ensure_mode_exists(mode)
+            dev.ensure_mode_exists(new_mode)
             vjoy_id = joystick_handling.vjoy_id_from_guid(vjoy_guid)
             for input_type in all_input_types:
-                for item in mode.config[input_type].values():
+                for item in new_mode.config[input_type].values():
                     if (item.binding):
                         # TODO: ignore binding if it begins with a hash '#' symbol
                         self._bound_vjoys_in_current_mode[input_type][item.binding]["device_id"] = vjoy_id
