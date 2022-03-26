@@ -805,6 +805,7 @@ class GremlinUi(QtWidgets.QMainWindow):
         :param new_mode the name of the new current mode
         """
         self._current_mode = new_mode
+        self._profile.mode_changed_cb(new_mode) # update vjoy binding list for mode
 
         for tab in self.tabs.values():
             tab.mode_changed_cb(new_mode)
