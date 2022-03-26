@@ -738,6 +738,16 @@ class VJoySelector(AbstractInputSelector):
         self.profile = profile
         self.binding_dropdown = None # use a single list of all possible bindings
         self._create_binding_dropdown()
+        
+    def get_selection(self):
+        
+        # short-circuit if binding selection n/a
+        if self.profile is None:
+            return super().get_selection()
+        
+        # profile.get_vjoy_from_binding returns dict with expected entries
+        binding = self.binding_dropdown.currentText()
+        return self.profile.get_vjoy_from_binding(binding)
 
     def _initialize(self):
         potential_devices = sorted(

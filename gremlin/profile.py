@@ -1650,12 +1650,14 @@ class Profile:
                         self._bound_vjoys_in_current_mode[input_type][item.binding] = {}
                         self._bound_vjoys_in_current_mode[input_type][item.binding]["device_id"] = vjoy_id
                         self._bound_vjoys_in_current_mode[input_type][item.binding]["input_id"] = item.input_id
+                        self._bound_vjoys_in_current_mode[input_type][item.binding]["input_type"] = input_type # this is kind of dumb, but makes accessing type from binding easy
     
     def get_vjoy_from_binding(self, binding):
-        """Returns VJoy device & input associated with binding
+        """Returns VJoy device id, input id, and input type associated with binding
 
         :param binding the binding assigned to desired VJoy input
         """    
+        # finding binding in list of all bound vjoys
         # we can do this because all drop-downs are already filtered for correct type
         # and binding list only allows one binding per vjoy output
         all_bound_vjoys_in_mode = {}
