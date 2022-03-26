@@ -1639,7 +1639,7 @@ class Profile:
             dev.ensure_mode_exists(new_mode)
             vjoy_id = joystick_handling.vjoy_id_from_guid(vjoy_guid)
             for input_type in all_input_types:
-                for item in new_mode.config[input_type].values():
+                for item in dev.modes[new_mode].config[input_type].values():
                     if (item.binding):
                         # TODO: ignore binding if it begins with a hash '#' symbol
                         self._bound_vjoys_in_current_mode[input_type][item.binding]["device_id"] = vjoy_id
