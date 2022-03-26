@@ -724,16 +724,19 @@ class VJoySelector(AbstractInputSelector):
 
     """Widget allowing the selection of vJoy inputs."""
 
-    def __init__(self, change_cb, valid_types, invalid_ids={}, parent=None):
+    def __init__(self, change_cb, valid_types, invalid_ids={}, profile=None, parent=None):
         """Creates a widget to select a vJoy output.
 
         :param change_cb callback to execute when the widget changes
         :param valid_types the input type to present in the selection
         :param invalid_ids list of vid values of vjoy devices to not consider
+        :param profile link to profile for up-to-date binding lists
         :param parent of this widget
         """
         self.invalid_ids = invalid_ids
         super().__init__(change_cb, valid_types, parent)
+        self.profile = profile
+        self._create_binding_dropdown()
 
     def _initialize(self):
         potential_devices = sorted(
@@ -760,6 +763,49 @@ class VJoySelector(AbstractInputSelector):
 
     def _device_identifier(self, device):
         return device.vjoy_id
+    
+    def _create_binding_dropdown(self):
+        count_map = {
+            gremlin.common.InputType.JoystickAxis: lambda x: x.axis_count,
+            gremlin.common.InputType.JoystickButton: lambda x: x.button_count,
+            gremlin.common.InputType.JoystickHat: lambda x: x.hat_count
+        }
+        
+        # TODO: implement
+        # should show all possible bindings limited to this input type
+
+        self.input_item_dropdowns = []
+        self._input_type_registry = []
+
+        # Create input item selections for the devices. Each selection
+        # will be invisible unless it is selected as the active device
+        for device in self.device_list:
+            selection = QtWidgets.QComboBox(self)
+            selection.setMaxVisibleItems(20)
+            self._input_type_registry.append([])
+
+            # Add items based on the input type
+            for input_type in self.valid_types:
+                for i in range(count_map[input_type](device)):
+                    input_id = i+1
+                    if input_type == gremlin.common.InputType.JoystickAxis:
+                        input_id = device.axis_map[i].axis_index
+
+                    selection.addItem(gremlin.common.input_to_ui_string(
+                        input_type,
+                        input_id
+                    ))
+                    self._input_type_registry[-1].append(input_type)
+
+            # Add the selection and hide it
+            selection.setVisible(False)
+            selection.activated.connect(self._execute_callback)
+            self.main_layout.addWidget(selection)
+            self.input_item_dropdowns.append(selection)
+
+        # Show the first entry by default
+        if len(self.input_item_dropdowns) > 0:
+            self.input_item_dropdowns[0].setVisible(True)
 
 
 class ActionSelector(QtWidgets.QWidget):
