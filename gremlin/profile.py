@@ -1657,6 +1657,13 @@ class Profile:
             all_bound_vjoys_in_mode.update(self._bound_vjoys_in_current_mode[input_type])
         return all_bound_vjoys_in_mode[binding]
     
+    def get_bindings_of_type(self, input_type):
+        """Returns binding entries for given input type
+
+        :param input_type type of input
+        """    
+        return self._bound_vjoys_in_current_mode[input_type].keys()
+    
     def empty(self):
         """Returns whether or not a profile is empty.
 
