@@ -1650,8 +1650,13 @@ class Profile:
         """Returns VJoy device & input associated with binding
 
         :param binding the binding assigned to desired VJoy input
-        """        
-        return self._bound_vjoys_in_current_mode[binding]
+        """    
+        # we can do this because all drop-downs are already filtered for correct type
+        # and binding list only allows one binding per vjoy output
+        all_bound_vjoys_in_mode = {}
+        for input_type in self._bound_vjoys_in_current_mode:
+            all_bound_vjoys_in_mode.update(self._bound_vjoys_in_current_mode[input_type])
+        return all_bound_vjoys_in_mode[binding]
     
     def empty(self):
         """Returns whether or not a profile is empty.
