@@ -736,8 +736,10 @@ class VJoySelector(AbstractInputSelector):
         self.invalid_ids = invalid_ids
         super().__init__(change_cb, valid_types, parent)
         self.profile = profile
+        self._assignment_from_binding = False
         self.binding_dropdown = None # use a single list of all possible bindings
         self._create_binding_dropdown()
+        self._create_assignment_selector()
         
     def get_selection(self):
         
@@ -784,6 +786,18 @@ class VJoySelector(AbstractInputSelector):
             self.binding_dropdown.addItems(self.profile.get_bindings_of_type(input_type))
         self.main_layout.addWidget(self.binding_dropdown)
         self.binding_dropdown.activated.connect(self._update_device)
+        
+    def _create_assignment_selector(self):
+        if self.profile is None:
+            return # do not create a binding dropdown
+        # create radio dial
+        
+        # use setParent to move widget
+        # create hbox - has radio button and drop-downs within
+        # create vbox 1 - has two radial dials to left
+        # create vbox 2 - 
+            # move current layout (two drop-downs) into first as hbox
+            # create binding selector as second
 
 
 class ActionSelector(QtWidgets.QWidget):
