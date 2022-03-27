@@ -739,16 +739,6 @@ class VJoySelector(AbstractInputSelector):
         self.binding_dropdown = None # use a single list of all possible bindings
         self._create_binding_dropdown()
         
-    def get_selection(self):
-        
-        # short-circuit if binding selection n/a
-        if self.profile is None:
-            return super().get_selection()
-        
-        # profile.get_vjoy_from_binding returns dict with expected entries
-        binding = self.binding_dropdown.currentText()
-        return self.profile.get_vjoy_from_binding(binding)
-
     def _initialize(self):
         potential_devices = sorted(
             gremlin.joystick_handling.vjoy_devices(),
@@ -783,8 +773,26 @@ class VJoySelector(AbstractInputSelector):
         for input_type in self.valid_types:
             self.binding_dropdown.addItems(self.profile.get_bindings_of_type(input_type))
         self.main_layout.addWidget(self.binding_dropdown)
-        self.binding_dropdown.activated.connect(self._update_device)
-
+        # TODO: change this so that text is returned, not index
+        self.binding_dropdown.activated.connect(self._update_binding)
+        
+    def _update_device(self, index):
+        # call super for device update
+        # also update binding based on input item
+        super()._update_device(index)
+        
+        # TODO: check this is actually a consistent way to get vjoy at the right index
+        device_guid = self.device_list[index].device_guid
+        selection = self.get_selection()
+        binding = self.get_binding_from_vjoy(device_guid,selection["input_id"],selection["input_type"])
+        # assign binding drop_down to binding
+        
+    def _update_binding(self, binding):
+        # TODO: implement
+        # get device and input id from binding
+        # set device and input dropdowns to match
+        # call execute callback
+        return -1
 
 class ActionSelector(QtWidgets.QWidget):
 
