@@ -1314,6 +1314,7 @@ class Profile:
         self.plugins = []
         self.settings = Settings(self)
         self.parent = None
+        self._current_mode = ''
         self._bound_vjoys_in_current_mode = {}
 
     def initialize_joystick_device(self, device, modes):
@@ -1622,7 +1623,10 @@ class Profile:
         Updates stored binding list to match new mode.
         
         :param new_mode the name of the new current mode
-        """        
+        """    
+        
+        # store mode name for future retrieval
+        self._current_mode = new_mode    
         
         # List all input types
         all_input_types = [
@@ -1646,7 +1650,6 @@ class Profile:
             for input_type in all_input_types:
                 for item in dev.modes[new_mode].config[input_type].values():
                     if item.binding:
-                        # TODO: ignore binding if it begins with a hash '#' symbol
                         self._bound_vjoys_in_current_mode[input_type][item.binding] = {}
                         self._bound_vjoys_in_current_mode[input_type][item.binding]["device_id"] = vjoy_id
                         self._bound_vjoys_in_current_mode[input_type][item.binding]["input_id"] = item.input_id
@@ -1671,6 +1674,18 @@ class Profile:
         :param input_type type of input
         """    
         return self._bound_vjoys_in_current_mode[input_type].keys()
+    
+    def get_binding_from_vjoy(self, device_guid, input_id, input_type):
+        """Returns binding for given vjoy device and input
+
+        :param device_id vjoy device to query
+        :param input_id input id for device to query
+        :param inout_type input type for query
+        """    
+        dev = self.vjoy_devices[device_guid]
+        mode = dev.modes[self._current_mode]
+        item = mode.config[input_type][input_id].binding
+        return item.binding
     
     def empty(self):
         """Returns whether or not a profile is empty.
