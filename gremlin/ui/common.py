@@ -773,16 +773,35 @@ class VJoySelector(AbstractInputSelector):
         for input_type in self.valid_types:
             self.binding_dropdown.addItems(self.profile.get_bindings_of_type(input_type))
         self.main_layout.addWidget(self.binding_dropdown)
-        # TODO: change this so that text is returned, not index
         self.binding_dropdown.activated.connect(self._update_binding)
         
-    def _update_binding(self, binding):
-        if not binding:
-            # TODO reset selection to first unbound vjoy_device
-            return
+    def _update_binding(self):
+        # get selection based on binding
+        binding = self.binding_dropdown.currentText()
+        if not binding: # get first used and unbound vjoy
+            type_to_name_map = { # this is pretty hacky but it works
+                gremlin.common.InputType.JoystickAxis: "axis",
+                gremlin.common.InputType.JoystickButton: "button",
+                gremlin.common.InputType.JoystickHat: "hat",
+                gremlin.common.InputType.Keyboard: "button",
+            }
+            unused_vjoy_list = self.profile.list_unused_vjoy_inputs()
+            for device_id in unused_vjoy_list:
+                device_guid = self.device_list[device_id].device_guid
+                for input_type in self.valid_types:
+                    input_name = type_to_name_map[input_type]
+                    for input_id in unused_vjoy_list[device_id][input_name]:
+                        if not self.profile.get_binding_from_vjoy(device_guid, input_id, input_type):
+                            selection = {
+                                "device_id": device_id,
+                                "input_id": input_id,
+                                "input_type": input_type
+                            }
+                            break
+        else:
+            selection = self.profile.get_vjoy_from_binding(binding)
         
-        # get selection from binding; update ui and pass to callback function
-        selection = self.profile.get_vjoy_from_binding(binding)
+        # update ui and pass to callback function from selection
         self.set_selection(selection["input_type"],selection["device_id"],selection["input_id"])
         self.chage_cb(selection)
     
@@ -796,8 +815,6 @@ class VJoySelector(AbstractInputSelector):
             device_guid = self.device_list[self.device_dropdown.currentIndex()].device_guid
             binding = self.get_binding_from_vjoy(device_guid,selection["input_id"],selection["input_type"])
             self.binding_dropdown.setCurrentText(binding)
-        
-       
 
 class ActionSelector(QtWidgets.QWidget):
 
