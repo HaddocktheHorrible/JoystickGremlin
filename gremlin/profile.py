@@ -1676,11 +1676,11 @@ class Profile:
         return self._bound_vjoys_in_current_mode[input_type].keys()
     
     def get_binding_from_vjoy(self, device_guid, input_id, input_type):
-        """Returns binding for given vjoy device and input
+        """Returns binding for given vjoy device and input in current mode
 
-        :param device_id vjoy device to query
+        :param device_guid vjoy device guid to query
         :param input_id input id for device to query
-        :param inout_type input type for query
+        :param input_type input type for query
         """    
         dev = self.vjoy_devices[device_guid]
         mode = dev.modes[self._current_mode]
