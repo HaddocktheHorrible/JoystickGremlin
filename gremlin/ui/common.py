@@ -777,11 +777,14 @@ class VJoySelector(AbstractInputSelector):
         self.binding_dropdown.activated.connect(self._update_binding)
         
     def _update_binding(self, binding):
-        # TODO: implement
-        # get device and input id from binding
-        # set device and input dropdowns to match
-        # call execute callback
-        return -1
+        if not binding:
+            # TODO reset selection to first unbound vjoy_device
+            return
+        
+        # get selection from binding; update ui and pass to callback function
+        selection = self.profile.get_vjoy_from_binding(binding)
+        self.set_selection(selection["input_type"],selection["device_id"],selection["input_id"])
+        self.chage_cb(selection)
     
     def _execute_callback(self):
         # pass current selection to callback function
