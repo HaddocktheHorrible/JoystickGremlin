@@ -776,22 +776,25 @@ class VJoySelector(AbstractInputSelector):
         # TODO: change this so that text is returned, not index
         self.binding_dropdown.activated.connect(self._update_binding)
         
-    def _update_device(self, index):
-        # call super implementation to update input id and initiate callback
-        super()._update_device(index)
-        
-        # update binding dropdown to match selected device and input id
-        device_guid = self.device_list[index].device_guid
-        selection = self.get_selection()
-        binding = self.get_binding_from_vjoy(device_guid,selection["input_id"],selection["input_type"])
-        self.binding_dropdown.setCurrentText(binding)
-        
     def _update_binding(self, binding):
         # TODO: implement
         # get device and input id from binding
         # set device and input dropdowns to match
         # call execute callback
         return -1
+    
+    def _execute_callback(self):
+        # pass current selection to callback function
+        selection = self.get_selection()
+        self.chage_cb(selection)
+        
+        # if a binding dropdown exists, update it to match device and input id selection
+        if self.profile is not None:
+            device_guid = self.device_list[self.device_dropdown.currentIndex()].device_guid
+            binding = self.get_binding_from_vjoy(device_guid,selection["input_id"],selection["input_type"])
+            self.binding_dropdown.setCurrentText(binding)
+        
+       
 
 class ActionSelector(QtWidgets.QWidget):
 
