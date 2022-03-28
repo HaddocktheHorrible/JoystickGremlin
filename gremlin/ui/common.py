@@ -777,15 +777,14 @@ class VJoySelector(AbstractInputSelector):
         self.binding_dropdown.activated.connect(self._update_binding)
         
     def _update_device(self, index):
-        # call super for device update
-        # also update binding based on input item
+        # call super implementation to update input id and initiate callback
         super()._update_device(index)
         
-        # TODO: check this is actually a consistent way to get vjoy at the right index
+        # update binding dropdown to match selected device and input id
         device_guid = self.device_list[index].device_guid
         selection = self.get_selection()
         binding = self.get_binding_from_vjoy(device_guid,selection["input_id"],selection["input_type"])
-        # assign binding drop_down to binding
+        self.binding_dropdown.setCurrentText(binding)
         
     def _update_binding(self, binding):
         # TODO: implement
