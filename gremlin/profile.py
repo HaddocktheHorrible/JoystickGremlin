@@ -1314,6 +1314,7 @@ class Profile:
         self.plugins = []
         self.settings = Settings(self)
         self.parent = None
+        self.has_unbound_vjoys = {}
         self._current_mode = ''
         self._bound_vjoys_in_current_mode = {}
 
@@ -1644,6 +1645,7 @@ class Profile:
             InputType.JoystickHat: {},
             InputType.Keyboard: {}
         }
+        self.has_unbound_vjoys = {}
         for vjoy_guid, dev in self.vjoy_devices.items():
             dev.ensure_mode_exists(new_mode)
             vjoy_id = joystick_handling.vjoy_id_from_guid(vjoy_guid)
@@ -1654,6 +1656,8 @@ class Profile:
                         self._bound_vjoys_in_current_mode[input_type][item.binding]["device_id"] = vjoy_id
                         self._bound_vjoys_in_current_mode[input_type][item.binding]["input_id"] = item.input_id
                         self._bound_vjoys_in_current_mode[input_type][item.binding]["input_type"] = input_type # this is kind of dumb, but makes accessing type from binding easy
+                    else:
+                        self.has_unbound_vjoys[input_type] = True
     
     def get_vjoy_from_binding(self, binding):
         """Returns VJoy device id, input id, and input type associated with binding
