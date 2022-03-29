@@ -739,6 +739,19 @@ class VJoySelector(AbstractInputSelector):
         self.binding_dropdown = None # use a single list of all possible bindings
         self._create_binding_dropdown()
         
+    def set_selection(self, input_type, device_id, input_id, binding=''):
+        # if binding passed, use that to populate vjoy instead of super func
+        # since this also calls _self.chage_cb, this also gives us a convenient way to set 
+        # preference for binding assignments during ui initialization
+        if self.profile is None:
+            super().set_selection(input_type, device_id, input_id)
+        elif binding:
+            self.binding_dropdown.setCurrentText(binding)
+            self._update_binding()
+        else:
+            super().set_selection(input_type, device_id, input_id)
+            self._sync_binding(input_id,input_type) # call this to update binding if one exists
+        
     def _initialize(self):
         potential_devices = sorted(
             gremlin.joystick_handling.vjoy_devices(),
@@ -804,17 +817,21 @@ class VJoySelector(AbstractInputSelector):
         # update ui and pass to callback function from selection
         self.set_selection(selection["input_type"],selection["device_id"],selection["input_id"])
         self.chage_cb(selection)
+        
+    def _sync_binding(self,input_id,input_type):
+        # sync binding selection based on current vjoy device/input
+        device_guid = self.device_list[self.device_dropdown.currentIndex()].device_guid
+        binding = self.get_binding_from_vjoy(device_guid,input_id,input_type)
+        self.binding_dropdown.setCurrentText(binding)
     
     def _execute_callback(self):
-        # pass current selection to callback function
+        # overwrite super to ensure binding is updated on callback
         selection = self.get_selection()
         self.chage_cb(selection)
         
         # if a binding dropdown exists, update it to match device and input id selection
         if self.profile is not None:
-            device_guid = self.device_list[self.device_dropdown.currentIndex()].device_guid
-            binding = self.get_binding_from_vjoy(device_guid,selection["input_id"],selection["input_type"])
-            self.binding_dropdown.setCurrentText(binding)
+            self._sync_binding(selection["input_id"],selection["input_type"])
 
 class ActionSelector(QtWidgets.QWidget):
 
