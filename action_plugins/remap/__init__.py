@@ -115,6 +115,9 @@ class RemapWidget(gremlin.ui.input_item.AbstractActionWidget):
 
     def _populate_ui(self):
         """Populates the UI components."""
+        # Get binding; if set, this will take precedence over other settings
+        binding = self.action_data.binding
+        
         # Get the appropriate vjoy device identifier
         vjoy_dev_id = 0
         if self.action_data.vjoy_device_id not in [0, None]:
@@ -153,7 +156,8 @@ class RemapWidget(gremlin.ui.input_item.AbstractActionWidget):
             self.vjoy_selector.set_selection(
                 input_type,
                 vjoy_dev_id,
-                vjoy_input_id
+                vjoy_input_id,
+                binding
             )
 
             if self.action_data.input_type == InputType.JoystickAxis:
@@ -187,6 +191,7 @@ class RemapWidget(gremlin.ui.input_item.AbstractActionWidget):
             self.action_data.vjoy_device_id = vjoy_data["device_id"]
             self.action_data.vjoy_input_id = vjoy_data["input_id"]
             self.action_data.input_type = vjoy_data["input_type"]
+            self.action_data.binding = vjoy_data["binding"]
 
             if self.action_data.input_type == InputType.JoystickAxis:
                 self.action_data.axis_mode = "absolute"

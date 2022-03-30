@@ -739,6 +739,13 @@ class VJoySelector(AbstractInputSelector):
         self.binding_dropdown = None # use a single list of all possible bindings
         self._create_binding_dropdown()
         
+    def get_selection(self):
+        # include binding in selection if applicable
+        selection = super().get_selection()
+        if self.profile is not None:
+            selection["binding"] = self.binding_dropdown.currentText()
+        return selection
+        
     def set_selection(self, input_type, device_id, input_id, binding=''):
         # if binding passed, use that to populate vjoy instead of super func
         # since this also calls _self.chage_cb, this also gives us a convenient way to set 
