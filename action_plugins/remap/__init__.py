@@ -17,6 +17,7 @@
 
 
 import logging
+import string
 import threading
 import time
 from xml.etree import ElementTree
@@ -333,6 +334,7 @@ class Remap(gremlin.base_classes.AbstractAction):
         # automatically
         self.vjoy_device_id = None
         self.vjoy_input_id = None
+        self.binding = ''
         self.input_type = self.parent.parent.input_type
         self.axis_mode = "absolute"
         self.axis_scaling = 1.0
@@ -400,6 +402,7 @@ class Remap(gremlin.base_classes.AbstractAction):
                 )
 
             self.vjoy_device_id = safe_read(node, "vjoy", int)
+            self.binding = safe_read(node, "binding", str, '')
 
             if self.get_input_type() == InputType.JoystickAxis and \
                     self.input_type == InputType.JoystickAxis:
@@ -408,6 +411,7 @@ class Remap(gremlin.base_classes.AbstractAction):
         except ProfileError:
             self.vjoy_input_id = None
             self.vjoy_device_id = None
+            self.binding = ''
 
     def _generate_xml(self):
         """Returns an XML node encoding this action's data.
@@ -415,6 +419,7 @@ class Remap(gremlin.base_classes.AbstractAction):
         :return XML node containing the action's data
         """
         node = ElementTree.Element("remap")
+        node.set("binding", safe_format(self.binding, str))
         node.set("vjoy", str(self.vjoy_device_id))
         if self.input_type == InputType.Keyboard:
             node.set(
