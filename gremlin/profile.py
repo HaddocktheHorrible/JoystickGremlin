@@ -1650,14 +1650,18 @@ class Profile:
             dev.ensure_mode_exists(new_mode)
             vjoy_id = joystick_handling.vjoy_id_from_guid(vjoy_guid)
             for input_type in all_input_types:
-                for item in dev.modes[new_mode].config[input_type].values():
-                    if item.binding:
-                        self._bound_vjoys_in_current_mode[input_type][item.binding] = {}
-                        self._bound_vjoys_in_current_mode[input_type][item.binding]["device_id"] = vjoy_id
-                        self._bound_vjoys_in_current_mode[input_type][item.binding]["input_id"] = item.input_id
-                        self._bound_vjoys_in_current_mode[input_type][item.binding]["input_type"] = input_type # this is kind of dumb, but makes accessing type from binding easy
-                    else:
-                        self.has_unbound_vjoys[input_type] = True
+                input_items = dev.modes[new_mode].config[input_type].values()
+                if not input_items:  # if no inputs are defined, we have an uninitialized mode/input... which always has unbound vjoys
+                    self.has_unbound_vjoys[input_type] = True
+                else:
+                    for item in input_items:
+                        if item.binding:
+                            self._bound_vjoys_in_current_mode[input_type][item.binding] = {}
+                            self._bound_vjoys_in_current_mode[input_type][item.binding]["device_id"] = vjoy_id
+                            self._bound_vjoys_in_current_mode[input_type][item.binding]["input_id"] = item.input_id
+                            self._bound_vjoys_in_current_mode[input_type][item.binding]["input_type"] = input_type # this is kind of dumb, but makes accessing type from binding easy
+                        else:
+                            self.has_unbound_vjoys[input_type] = True
     
     def get_vjoy_from_binding(self, binding):
         """Returns VJoy device id, input id, and input type associated with binding
