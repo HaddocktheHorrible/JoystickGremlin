@@ -1688,7 +1688,7 @@ class Profile:
         """    
         dev = self.vjoy_devices[device_guid]
         mode = dev.modes[self._current_mode]
-        item = mode.config[input_type][input_id].binding
+        item = mode.config[input_type][input_id]
         return item.binding
     
     def empty(self):
