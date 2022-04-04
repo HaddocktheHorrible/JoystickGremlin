@@ -1425,7 +1425,7 @@ class Profile:
         for dev in self.devices.values():
             for mode in dev.modes.values():
                 for input_type in all_input_types:
-                    for item in mode.config[input_type].values():
+                    for item in mode.all_input_items_of_type(input_type):
                         for container in item.containers:
                             remap_actions.extend(
                                 extract_remap_actions(container.action_sets)
@@ -1666,13 +1666,14 @@ class Profile:
         for vjoy_guid, dev in self.vjoy_devices.items():
             vjoy_id = joystick_handling.vjoy_id_from_guid(vjoy_guid)
             for input_type in bindings:
-                input_items = dev.modes[mode_name].config[input_type].values()
+                input_items = dev.modes[mode_name].all_input_items_of_type(input_type)
                 for item in input_items:
                     if item.binding in bindings[input_type]:
                         # throw warning and skip if duplicate binding found
                         vjoy_name = "vJoy Device {:d}".format(vjoy_id)
                         input_name = input_to_ui_string(input_type, item.input_id)
-                        warn_str = "Duplicate binding found for {}! Cleared binding from {}: {} in mode {}".format(item.binding, vjoy_name, input_name, mode_name)
+                        warn_str = "Duplicate binding found for {}! Cleared binding and description from {}: {} in mode {}".format(item.binding, vjoy_name, input_name, mode_name)
+                        item.clear_binding(True)
                         logging.getLogger("system").warning(warn_str)
                         continue
                     else:
@@ -1714,7 +1715,7 @@ class Profile:
         nAvailable = 0
         for dev in self.vjoy_devices.values():
             mode = dev.modes[next(iter(dev.modes))]     # since bindings are shared across all modes, we just look at the first mode
-            nAvailable += len(mode.config[input_type].values())
+            nAvailable += len(mode.all_input_items_of_type(input_type))
         return nBindings < nAvailable
         
     
@@ -1738,14 +1739,14 @@ class Profile:
         for dev in self.devices.values():
             for mode in dev.modes.values():
                 for input_type in all_input_types:
-                    for item in mode.config[input_type].values():
+                    for item in mode.all_input_items_of_type(input_type):
                         is_empty &= len(item.containers) == 0
 
         # Process all vJoy devices
         for dev in self.vjoy_devices.values():
             for mode in dev.modes.values():
                 for input_type in all_input_types:
-                    for item in mode.config[input_type].values():
+                    for item in mode.all_input_items_of_type(input_type):
                         is_empty &= len(item.containers) == 0
 
         return is_empty
@@ -1929,7 +1930,7 @@ class Mode:
         ]
         for input_type in input_types:
             item_list = sorted(
-                self.config[input_type].values(),
+                self.all_input_items_of_type(input_type),
                 key=lambda x: x.input_id
             )
             for item in item_list:
@@ -1988,6 +1989,10 @@ class Mode:
         for input_type in self.config.values():
             for input_item in input_type.values():
                 yield input_item
+                
+    def all_input_items_of_type(self, input_type):
+        assert(input_type in self.config)
+        return self.config[input_type].values()
 
 
 class InputItem:
@@ -2078,6 +2083,15 @@ class InputItem:
         :return Type of this input
         """
         return self.input_type
+    
+    def clear_binding(self, clear_description = False):
+        """Resets binding to empty strings, with option to also reset description
+        
+        :param clear_description Indicate if descriptions should be cleared with bindings
+        """
+        self.binding = ""
+        if clear_description:
+            self.description = ""
 
     def __eq__(self, other):
         """Checks whether or not two InputItem instances are identical.
