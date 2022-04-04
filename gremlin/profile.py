@@ -1665,9 +1665,9 @@ class Profile:
         bindings = self._get_empty_binding_list()
         for vjoy_guid, dev in self.vjoy_devices.items():
             vjoy_id = joystick_handling.vjoy_id_from_guid(vjoy_guid)
+            dev.ensure_mode_exists(mode_name)
             for input_type in bindings:
-                input_items = dev.modes[mode_name].all_input_items_of_type(input_type)
-                for item in input_items:
+                for item in dev.modes[mode_name].all_input_items_of_type(input_type):
                     if item.binding in bindings[input_type]:
                         # throw warning and skip if duplicate binding found
                         vjoy_name = "vJoy Device {:d}".format(vjoy_id)
@@ -1675,8 +1675,8 @@ class Profile:
                         warn_str = "Duplicate binding found for {}! Cleared binding and description from {}: {} in mode {}".format(item.binding, vjoy_name, input_name, mode_name)
                         item.clear_binding(True)
                         logging.getLogger("system").warning(warn_str)
-                        continue
-                    else:
+                    elif item.binding:
+                        # only store item if a binding is recorded
                         bindings[input_type][item.binding] = {}
                         bindings[input_type][item.binding]["device_id"] = vjoy_id
                         bindings[input_type][item.binding]["input_id"] = item.input_id
