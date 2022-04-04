@@ -791,7 +791,7 @@ class VJoySelector(AbstractInputSelector):
         self.binding_dropdown = QtWidgets.QComboBox(self)
         self.binding_dropdown.setMaxVisibleItems(20)
         for input_type in self.valid_types:
-            if self.profile.has_unbound_vjoys[input_type]:
+            if self.profile.has_unbound_vjoys(input_type):
                 self.binding_dropdown.addItem('')
                 break # include blank if at least one unbound binding
         for input_type in self.valid_types:

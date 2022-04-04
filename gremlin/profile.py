@@ -30,7 +30,7 @@ import dill
 
 import action_plugins
 from gremlin.common import DeviceType, InputType, MergeAxisOperation, \
-    PluginVariableType
+    PluginVariableType, input_to_ui_string
 from . import base_classes, common, error, input_devices, joystick_handling, \
     plugin_manager, util
 
@@ -1314,9 +1314,7 @@ class Profile:
         self.plugins = []
         self.settings = Settings(self)
         self.parent = None
-        self.has_unbound_vjoys = {}
-        self._current_mode = ''
-        self._bound_vjoys_in_current_mode = {}
+        self._bound_vjoys = {}
 
     def initialize_joystick_device(self, device, modes):
         """Ensures a joystick is properly initialized in the profile.
@@ -1477,6 +1475,15 @@ class Profile:
             device = Device(self)
             device.from_xml(child)
             self.vjoy_devices[device.device_guid] = device
+            
+        # Populate initial list of bound vjoy items
+        # Duplicates removed within each mode by get_all_bindings_in_mode
+        # Remove duplicate bindings across modes, if any
+        for dev in self.vjoy_devices.values():
+            for mode_name, mode in dev.modes.items():
+                bindings = self.get_all_bindings_in_mode(mode_name)
+                # TODO: finish this part
+        
 
         # Ensure that the profile contains an entry for every existing
         # device even if it was not part of the loaded XML and
@@ -1621,67 +1628,72 @@ class Profile:
     def mode_changed_cb(self, new_mode):
         """Handles mode change.
 
-        Updates stored binding list to match new mode.
+        Updates stored binding list to match new mode. This isn't strictly needed
+        on each mode change, since the bindings are the same across all modes. However,
+        since we call a "mode" change to update all device tabs when a binding is 
+        updated, we handle an update of the internal binding list on mode change too.
         
         :param new_mode the name of the new current mode
         """    
         
-        # store mode name for future retrieval
-        self._current_mode = new_mode    
-        
-        # List all input types
-        all_input_types = [
-            InputType.JoystickAxis,
-            InputType.JoystickButton,
-            InputType.JoystickHat,
-            InputType.Keyboard
-        ]
-        
-        # loop over devices and input items within mode
-        # borrows approach from `list_unused_vjoy_inputs`
-        self._bound_vjoys_in_current_mode = {
-            InputType.JoystickAxis: {},
-            InputType.JoystickButton: {},
-            InputType.JoystickHat: {},
-            InputType.Keyboard: {}
-        }
-        self.has_unbound_vjoys = {}
-        for vjoy_guid, dev in self.vjoy_devices.items():
-            dev.ensure_mode_exists(new_mode)
-            vjoy_id = joystick_handling.vjoy_id_from_guid(vjoy_guid)
-            for input_type in all_input_types:
-                input_items = dev.modes[new_mode].config[input_type].values()
-                if not input_items:  # if no inputs are defined, we have an uninitialized mode/input... which always has unbound vjoys
-                    self.has_unbound_vjoys[input_type] = True
-                else:
-                    for item in input_items:
-                        if item.binding:
-                            self._bound_vjoys_in_current_mode[input_type][item.binding] = {}
-                            self._bound_vjoys_in_current_mode[input_type][item.binding]["device_id"] = vjoy_id
-                            self._bound_vjoys_in_current_mode[input_type][item.binding]["input_id"] = item.input_id
-                            self._bound_vjoys_in_current_mode[input_type][item.binding]["input_type"] = input_type # this is kind of dumb, but makes accessing type from binding easy
-                        else:
-                            self.has_unbound_vjoys[input_type] = True
+        self._bound_vjoys = self.get_all_bindings_in_mode(new_mode)
     
     def get_vjoy_from_binding(self, binding):
         """Returns VJoy device id, input id, and input type associated with binding
 
         :param binding the binding assigned to desired VJoy input
+        :return vjoy device/input for corresponding binding
         """    
         # finding binding in list of all bound vjoys
         # we can do this because all drop-downs are already filtered for correct type
         # and binding list only allows one binding per vjoy output
         all_bound_vjoys_in_mode = {}
-        for input_type in self._bound_vjoys_in_current_mode:
-            all_bound_vjoys_in_mode.update(self._bound_vjoys_in_current_mode[input_type])
+        for input_type in self._bound_vjoys:
+            all_bound_vjoys_in_mode.update(self._bound_vjoys[input_type])
         return all_bound_vjoys_in_mode[binding]
+    
+    def get_all_bindings_in_mode(self, mode_name):
+        """Returns all vjoy bindings for given mode
+        
+        Clears duplicate bindings and throws warning to log.
+        
+        :param mode_name mode to examine for vjoy bindings
+        :return dict of all vjoy bindings for each input type
+        """
+        
+        # initialize with possible input types
+        bindings = {
+            InputType.JoystickAxis: {},
+            InputType.JoystickButton: {},
+            InputType.JoystickHat: {},
+            InputType.Keyboard: {}
+        }
+        for vjoy_guid, dev in self.vjoy_devices.items():
+            vjoy_id = joystick_handling.vjoy_id_from_guid(vjoy_guid)
+            for input_type in bindings:
+                input_items = dev.modes[mode_name].config[input_type].values()
+                for item in input_items:
+                    if item.binding in bindings[input_type]:
+                        # throw warning and skip if duplicate binding found
+                        vjoy_name = "vJoy Device {:d}".format(vjoy_id)
+                        input_name = input_to_ui_string(input_type, item.input_id)
+                        warn_str = "Duplicate binding found for {}! Cleared binding from {}: {} in mode {}".format(item.binding, vjoy_name, input_name, mode_name)
+                        logging.getLogger("system").warning(warn_str)
+                        continue
+                    else:
+                        bindings[input_type][item.binding] = {}
+                        bindings[input_type][item.binding]["device_id"] = vjoy_id
+                        bindings[input_type][item.binding]["input_id"] = item.input_id
+                        bindings[input_type][item.binding]["input_type"] = input_type # this is silly, but makes accessing type from binding easy
+        return bindings
     
     def get_bindings_of_type(self, input_type):
         """Returns binding entries for given input type
 
         :param input_type type of input
+        :return all bindings for given input_type
         """    
-        return self._bound_vjoys_in_current_mode[input_type].keys()
+        return self._bound_vjoys[input_type].keys()
     
     def get_binding_from_vjoy(self, device_guid, input_id, input_type):
         """Returns binding for given vjoy device and input in current mode
@@ -1689,11 +1701,27 @@ class Profile:
         :param device_guid vjoy device guid to query
         :param input_id input id for device to query
         :param input_type input type for query
+        :return binding for corresponding vjoy device/input
         """    
         dev = self.vjoy_devices[device_guid]
-        mode = dev.modes[self._current_mode]
+        mode = dev.modes[next(iter(dev.modes))]     # since bindings are shared across all modes, we just look at the first mode
         item = mode.config[input_type][input_id]
         return item.binding
+    
+    def has_unbound_vjoys(self, input_type):
+        """Returns true if there unbound vjoys of desired type
+
+        :param input_type type to check against
+        :return true if there are less bindings than total number of available
+        """
+        
+        nBindings = len(self._bound_vjoys[input_type])
+        nAvailable = 0
+        for dev in self.vjoy_devices.values():
+            mode = dev.modes[next(iter(dev.modes))]     # since bindings are shared across all modes, we just look at the first mode
+            nAvailable += len(mode.config[input_type].values())
+        return nBindings < nAvailable
+        
     
     def empty(self):
         """Returns whether or not a profile is empty.
