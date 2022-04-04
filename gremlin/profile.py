@@ -1662,12 +1662,7 @@ class Profile:
         """
         
         # initialize with possible input types
-        bindings = {
-            InputType.JoystickAxis: {},
-            InputType.JoystickButton: {},
-            InputType.JoystickHat: {},
-            InputType.Keyboard: {}
-        }
+        bindings = self._get_empty_binding_list()
         for vjoy_guid, dev in self.vjoy_devices.items():
             vjoy_id = joystick_handling.vjoy_id_from_guid(vjoy_guid)
             for input_type in bindings:
@@ -1755,6 +1750,19 @@ class Profile:
 
         return is_empty
 
+    def _get_empty_binding_list(self):
+        """Returns list with all supported input types
+
+        Returns:
+            _type_: _description_
+        """
+        return {
+            InputType.JoystickAxis: {},
+            InputType.JoystickButton: {},
+            InputType.JoystickHat: {},
+            InputType.Keyboard: {}
+        }
+        
     def _parse_merge_axis(self, node):
         """Parses merge axis entries.
 
