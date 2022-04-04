@@ -1476,14 +1476,28 @@ class Profile:
             device.from_xml(child)
             self.vjoy_devices[device.device_guid] = device
             
-        # Populate initial list of bound vjoy items
-        # Duplicates removed within each mode by get_all_bindings_in_mode
-        # Remove duplicate bindings across modes, if any
-        for dev in self.vjoy_devices.values():
-            for mode_name, mode in dev.modes.items():
-                bindings = self.get_all_bindings_in_mode(mode_name)
-                # TODO: finish this part
+        # Gather list of unique bound vjoy items
+        # Mode existence is ensured through get_all_bindings_in_mode
+        # Duplicates are removed within each mode by get_all_bindings_in_mode
+        # Here we remove duplicate bindings across modes, if any
+        bindings = self._get_empty_binding_list()
+        for mode_name in mode_list(self):
+            mode_bindings = self.get_all_bindings_in_mode(mode_name)
+            for input_type in bindings:
+                bindings[input_type].update(mode_bindings[input_type])
+        self._bound_vjoys = bindings        
         
+                       
+        # TODO: sync read bindings across modes for each vjoy
+        
+        # loop over each device
+        # loop over each mode
+        # loop over each input item
+        # for each item get binding from master list
+        # log if binding doesn't equal expected
+        # change description?
+        # would have to log description in get_all_bindings_in_mode
+        # i.e. for each binding entry, add it to all modes for specified vjoy
 
         # Ensure that the profile contains an entry for every existing
         # device even if it was not part of the loaded XML and
@@ -1681,6 +1695,7 @@ class Profile:
                         bindings[input_type][item.binding]["device_id"] = vjoy_id
                         bindings[input_type][item.binding]["input_id"] = item.input_id
                         bindings[input_type][item.binding]["input_type"] = input_type # this is silly, but makes accessing type from binding easy
+                        bindings[input_type][item.binding]["description"] = item.description # this is also silly
         return bindings
     
     def get_bindings_of_type(self, input_type):
