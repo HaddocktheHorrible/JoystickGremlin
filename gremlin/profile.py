@@ -1314,7 +1314,7 @@ class Profile:
         self.plugins = []
         self.settings = Settings(self)
         self.parent = None
-        self._bound_vjoys = {}
+        self._bound_vjoys = self._get_empty_binding_list()
 
     def initialize_joystick_device(self, device, modes):
         """Ensures a joystick is properly initialized in the profile.
