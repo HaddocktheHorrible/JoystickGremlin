@@ -1485,8 +1485,12 @@ class Profile:
             mode_bindings = self.get_all_bindings_in_mode(mode_name)
             for input_type in bindings:
                 bindings[input_type].update(mode_bindings[input_type])
+                # TODO: report if a binding is overwritten here
         self._bound_vjoys = bindings        
         
+        # at this point we have all the unique bindings
+        # so we just need to clear all existing bindings and replace
+        # for all modes
                        
         # TODO: sync read bindings across modes for each vjoy
         
@@ -1804,6 +1808,51 @@ class Profile:
             }
 
         return entry
+
+class Binding:
+    
+    """Stores a set InputItems of identical binding across modes"""
+    
+    def __init__(self, input_item, parent):
+        """Creates a new Binding instance
+
+        :param input_item an InputItem instance used to find similar InputItems
+        :param parent the parent Profile of this binding
+        """
+        self.parent = parent
+        self.binding = input_item.binding
+        self.vjoy_id = -1 # TODO: get me from input_item
+        self.input_id = input_item.input_id
+        self.input_type = input_item.input_type
+        self.description = input_item.description
+        self.input_items = input_item
+        
+    def get_matching_input_items(self):
+        """Find all vjoy input items with same binding
+
+        """
+        # are we finding based on binding or input_id?
+        return -1
+    
+    @property
+    def binding(self):
+        return self.__binding
+    
+    @binding.setter
+    def binding(self, binding):
+        # TODO: update all linked input_items
+        self.__binding = binding
+        
+    @property
+    def description(self):
+        return self.__description
+    
+    @description.setter
+    def description(self, description):
+        """Update description for all linked input items"""
+        self.__description = description
+        for item in self.input_items:
+            item.description = description
 
 class Device:
 
