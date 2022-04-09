@@ -1821,6 +1821,7 @@ class Binding:
         """
         self.parent = parent
         self.binding = input_item.binding
+        self.vjoy_guid = input_item.parent.parent.device_guid
         self.vjoy_id = -1 # TODO: get me from input_item
         self.input_id = input_item.input_id
         self.input_type = input_item.input_type
@@ -1856,6 +1857,13 @@ class Binding:
                 for item in mode.all_input_items():
                     if item.binding == self.binding:
                         matching.append(item)
+        return matching
+    
+    def get_all_vjoy_items_from_id(self):
+        """Find all vjoy input items with same vjoy_id, input_id, input_id as self"""
+        matching = []
+        for mode in self.parent.vjoy_devices[self.vjoy_guid].modes.values():
+            matching.append(mode.get_data(self.input_type,self.input_id))
         return matching
     
 class Device:
