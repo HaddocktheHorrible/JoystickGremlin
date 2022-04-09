@@ -1826,14 +1826,8 @@ class Binding:
         self.input_type = input_item.input_type
         self.description = input_item.description
         self.input_items = input_item
+        # TODO: how do we check binding is assigned to all modes 
         
-    def get_matching_input_items(self):
-        """Find all vjoy input items with same binding
-
-        """
-        # are we finding based on binding or input_id?
-        return -1
-    
     @property
     def binding(self):
         return self.__binding
@@ -1853,7 +1847,17 @@ class Binding:
         self.__description = description
         for item in self.input_items:
             item.description = description
-
+            
+    def get_all_vjoy_items_from_binding(self):
+        """Find all vjoy input items with same binding as self"""
+        matching = []
+        for dev in self.parent.vjoy_devices.values():
+            for mode in dev.modes.values():
+                for item in mode.all_input_items():
+                    if item.binding == self.binding:
+                        matching.append(item)
+        return matching
+    
 class Device:
 
     """Stores the information about a single device including it's modes."""
