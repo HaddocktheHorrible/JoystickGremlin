@@ -2180,6 +2180,13 @@ class InputItem:
         """
         return self.get_device().type
     
+    def get_profile(self):
+        """Returns parent Profile"""
+        item = self.parent
+        while not isinstance(item, Profile):
+            item = item.parent
+        return item
+    
     def get_device(self):
         """Returns parent Device"""
         item = self.parent
