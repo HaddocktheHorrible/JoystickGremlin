@@ -1724,7 +1724,35 @@ class Profile:
             mode = dev.modes[next(iter(dev.modes))]     # since bindings are shared across all modes, we just look at the first mode
             nAvailable += len(mode.all_input_items_of_type(input_type))
         return nBindings < nAvailable
+    
+    def update_binding_list(self, input_item):
+        """Updates Profile bindings to from passed input item
+
+            Handles binding clears, new binding addition (across all modes), 
+            and overlapping binding conflict resolution.
         
+        :param input_item new/modified InputItem to register
+        """
+        
+        # TODO: finish
+        
+        # remove old binding from current list by searching list by input_item vjoy
+        #   this removes in all cases, including where binding is blank
+        # if input item has a binding:
+        #   create new Binding from input item -- this will remove overlaps and throw warnings
+        #   remove any bindings from current list by searching by input_item.binding
+        #   append new Binding to list
+        # sort of clumsy for lots of modes, but clear
+        
+        bound_vjoy = Binding(input_item, self)
+        old_binding = self.get_binding_from_vjoy(bound_vjoy.vjoy_guid, bound_vjoy.input_id, bound_vjoy.input_type)
+        if old_binding:
+            self._bound_vjoys[bound_vjoy.input_type].pop(old_binding)
+        
+        new_binding = bound_vjoy.binding
+        if new_binding:
+            self._bound_vjoys[bound_vjoy.input_type].pop(new_binding)
+            self._bound_vjoys[bound_vjoy.input_type][new_binding] = bound_vjoy
     
     def empty(self):
         """Returns whether or not a profile is empty.
