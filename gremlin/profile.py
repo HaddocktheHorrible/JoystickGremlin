@@ -1696,17 +1696,20 @@ class Profile:
         return self._bound_vjoys[input_type].keys()
     
     def get_binding_from_vjoy(self, device_guid, input_id, input_type):
-        """Returns binding for given vjoy device and input in current mode
+        """Returns binding for given vjoy device and input, if any
 
         :param device_guid vjoy device guid to query
         :param input_id input id for device to query
         :param input_type input type for query
         :return binding for corresponding vjoy device/input
         """    
-        dev = self.vjoy_devices[device_guid]
-        mode = dev.modes[next(iter(dev.modes))]     # since bindings are shared across all modes, we just look at the first mode
-        item = mode.config[input_type][input_id]
-        return item.binding
+        
+        binding = ""
+        for bound_vjoy in self._bound_vjoys[input_type].values():
+            if bound_vjoy.vjoy_guid == device_guid and bound_vjoy.input_id == input_id:
+                binding = bound_vjoy.binding
+                break
+        return binding
     
     def has_unbound_vjoys(self, input_type):
         """Returns true if there unbound vjoys of desired type
