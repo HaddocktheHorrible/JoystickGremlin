@@ -1476,33 +1476,18 @@ class Profile:
             device.from_xml(child)
             self.vjoy_devices[device.device_guid] = device
             
-        # Gather list of unique bound vjoy items
-        # Mode existence is ensured through get_all_bindings_in_mode
-        # Duplicates are removed within each mode by get_all_bindings_in_mode
-        # Here we remove duplicate bindings across modes, if any
+        # Gather list of unique bound vjoy items from all vjoy devices
+        # Binding uniqueness and existence across modes ensured by Binding class init
+        # looping over modes gets coverage in case a binding is defined in just one mode
         bindings = self._get_empty_binding_list()
-        for mode_name in mode_list(self):
-            mode_bindings = self.get_all_bindings_in_mode(mode_name)
+        for dev in self.vjoy_devices.values():
+            for mode in dev.modes.values():
             for input_type in bindings:
-                bindings[input_type].update(mode_bindings[input_type])
-                # TODO: report if a binding is overwritten here
+                    for item in mode.all_input_items_of_type[input_type]:
+                        if item.binding:
+                            bindings[input_type][item.binding] = Binding(item, self)
         self._bound_vjoys = bindings        
         
-        # at this point we have all the unique bindings
-        # so we just need to clear all existing bindings and replace
-        # for all modes
-                       
-        # TODO: sync read bindings across modes for each vjoy
-        
-        # loop over each device
-        # loop over each mode
-        # loop over each input item
-        # for each item get binding from master list
-        # log if binding doesn't equal expected
-        # change description?
-        # would have to log description in get_all_bindings_in_mode
-        # i.e. for each binding entry, add it to all modes for specified vjoy
-
         # Ensure that the profile contains an entry for every existing
         # device even if it was not part of the loaded XML and
         # replicate the modes present in the profile. This adds both entries
