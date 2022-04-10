@@ -1816,18 +1816,22 @@ class Binding:
     def __init__(self, input_item, parent):
         """Creates a new Binding instance
 
-        :param input_item an InputItem instance used to find similar InputItems
+        :param input_item an InputItem instance used to find equal InputItems
         :param parent the parent Profile of this binding
         """
+        
+        # create binding from passed input_item
         self.parent = parent
         self.binding = input_item.binding
         self.vjoy_guid = input_item.parent.parent.device_guid
-        self.vjoy_id = -1 # TODO: get me from input_item
+        self.vjoy_id = joystick_handling.vjoy_id_from_guid(self.vjoy_guid)
         self.input_id = input_item.input_id
         self.input_type = input_item.input_type
         self.description = input_item.description
-        self.input_items = input_item
-        # TODO: how do we check binding is assigned to all modes 
+        
+        # clear overlapping bindings; sync equal inputs and store
+        self.update_all_vjoy_items_from_binding()
+        self.input_items = self.get_all_vjoy_items_from_id()
         
     @property
     def binding(self):
@@ -1835,8 +1839,11 @@ class Binding:
     
     @binding.setter
     def binding(self, binding):
-        # TODO: update all linked input_items
+        """Set binding for all linked InputItems and clear overwritten bindings"""
         self.__binding = binding
+        for item in self.input_items:
+            item.binding = binding
+        self.update_all_vjoy_items_from_binding()
         
     @property
     def description(self):
@@ -1850,22 +1857,63 @@ class Binding:
             item.description = description
             
     def get_all_vjoy_items_from_binding(self):
-        """Find all vjoy input items with same binding as self"""
-        matching = []
+        """Find set of all vjoy input items with same binding as self"""
+        matching = set()
         for dev in self.parent.vjoy_devices.values():
             for mode in dev.modes.values():
                 for item in mode.all_input_items():
                     if item.binding == self.binding:
-                        matching.append(item)
+                        matching.add(item)
         return matching
     
     def get_all_vjoy_items_from_id(self):
-        """Find all vjoy input items with same vjoy_id, input_id, input_id as self"""
-        matching = []
+        """Find set of all vjoy input items with same vjoy device, input_type, and input_id as self"""
+        matching = set()
         for mode in self.parent.vjoy_devices[self.vjoy_guid].modes.values():
-            matching.append(mode.get_data(self.input_type,self.input_id))
+            matching.add(mode.get_data(self.input_type,self.input_id))
         return matching
     
+    def update_all_vjoy_items_from_binding(self):
+        """Synchronize all vjoy InputItems such that:
+        
+                1. The current binding correlates to ONE InputItem across all modes
+                2. The each mode instance of the InputItem has the same binding
+            
+            We log a message for each overwritten InputItem binding
+        """
+        bound_items = self.get_all_vjoy_items_from_binding()
+        equal_items = self.get_all_vjoy_items_from_id()
+        
+        # clear binding for each InputItem that does not equal current binding assignment
+        # log warning for all duplicates cleared
+        for item in bound_items.difference(equal_items):
+            # TODO: replace get vjoy_id with something saner
+            mode_name = item.parent.name
+            vjoy_name = "vJoy Device {:d}".format(joystick_handling.vjoy_id_from_guid(item.parent.parent.device_guid))
+            input_name = input_to_ui_string(item.input_type, item.input_id)
+            warn_str = "Duplicate binding found for {}! Cleared binding and description from {}: {} in mode {}"\
+                        .format(item.binding, vjoy_name, input_name, mode_name)
+            item.clear_binding()
+            logging.getLogger("system").warning(warn_str)
+            
+        # set binding for all equal items that were not correctly bound
+        # log warning for all overwritten items
+        for item in equal_items.difference(bound_items):
+            if item.binding:
+                mode_name = item.parent.name
+                vjoy_name = "vJoy Device {:d}".format(joystick_handling.vjoy_id_from_guid(item.parent.parent.device_guid))
+                input_name = input_to_ui_string(item.input_type, item.input_id)
+                warn_str = "Existing binding overwritten for {}: {} in mode {}! Binding changed from '{}' to '{}'"\
+                            .format(vjoy_name, input_name, mode_name, item.binding, self.binding)
+                logging.getLogger("system").warning(warn_str)
+            item.binding = self.binding
+            item.description = self.description
+    
+    def __del__(self):
+        # delete binding/description from any linked input_items before end
+        for item in self.input_items:
+            item.clear_binding()
+
 class Device:
 
     """Stores the information about a single device including it's modes."""
