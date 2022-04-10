@@ -2160,14 +2160,10 @@ class InputItem:
         """
         return self.input_type
     
-    def clear_binding(self, clear_description = False):
-        """Resets binding to empty strings, with option to also reset description
-        
-        :param clear_description Indicate if descriptions should be cleared with bindings
-        """
+    def clear_binding(self):
+        """Resets binding and description to empty strings"""
         self.binding = ""
-        if clear_description:
-            self.description = ""
+        self.description = ""
 
     def __eq__(self, other):
         """Checks whether or not two InputItem instances are identical.
