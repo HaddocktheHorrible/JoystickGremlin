@@ -1823,7 +1823,7 @@ class Binding:
         # create binding from passed input_item
         self.parent = parent
         self.binding = input_item.binding
-        self.vjoy_guid = input_item.parent.parent.device_guid
+        self.vjoy_guid = input_item.get_device().device_guid
         self.vjoy_id = joystick_handling.vjoy_id_from_guid(self.vjoy_guid)
         self.input_id = input_item.input_id
         self.input_type = input_item.input_type
@@ -1887,12 +1887,10 @@ class Binding:
         # clear binding for each InputItem that does not equal current binding assignment
         # log warning for all duplicates cleared
         for item in bound_items.difference(equal_items):
-            # TODO: replace get vjoy_id with something saner
-            mode_name = item.parent.name
-            vjoy_name = "vJoy Device {:d}".format(joystick_handling.vjoy_id_from_guid(item.parent.parent.device_guid))
+            vjoy_name = "vJoy Device {:d}".format(joystick_handling.vjoy_id_from_guid(item.get_device().device_guid))
             input_name = input_to_ui_string(item.input_type, item.input_id)
             warn_str = "Duplicate binding found for {}! Cleared binding and description from {}: {} in mode {}"\
-                        .format(item.binding, vjoy_name, input_name, mode_name)
+                        .format(item.binding, vjoy_name, input_name, item.get_mode().name)
             item.clear_binding()
             logging.getLogger("system").warning(warn_str)
             
@@ -1900,11 +1898,10 @@ class Binding:
         # log warning for all overwritten items
         for item in equal_items.difference(bound_items):
             if item.binding:
-                mode_name = item.parent.name
-                vjoy_name = "vJoy Device {:d}".format(joystick_handling.vjoy_id_from_guid(item.parent.parent.device_guid))
+                vjoy_name = "vJoy Device {:d}".format(joystick_handling.vjoy_id_from_guid(item.get_device().device_guid))
                 input_name = input_to_ui_string(item.input_type, item.input_id)
                 warn_str = "Existing binding overwritten for {}: {} in mode {}! Binding changed from '{}' to '{}'"\
-                            .format(vjoy_name, input_name, mode_name, item.binding, self.binding)
+                            .format(vjoy_name, input_name, item.get_mode().name, item.binding, self.binding)
                 logging.getLogger("system").warning(warn_str)
             item.binding = self.binding
             item.description = self.description
@@ -2196,10 +2193,21 @@ class InputItem:
 
         :return DeviceType of this entry
         """
+        return self.get_device().type
+    
+    def get_device(self):
+        """Returns parent Device"""
         item = self.parent
         while not isinstance(item, Device):
             item = item.parent
-        return item.type
+        return item
+    
+    def get_mode(self):
+        """Returns parent Mode"""
+        item = self.parent
+        while not isinstance(item, Mode):
+            item = item.parent
+        return item
 
     def get_input_type(self):
         """Returns the type of this input.
