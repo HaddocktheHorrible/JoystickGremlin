@@ -1477,7 +1477,7 @@ class Profile:
             self.vjoy_devices[device.device_guid] = device
             
         # Gather list of unique bound vjoy items from all vjoy devices
-        # Binding uniqueness and existence across modes ensured by Binding class init
+        # BoundVJoy uniqueness and existence across modes ensured by BoundVJoy class init
         # looping over modes gets coverage in case a binding is defined in just one mode
         bindings = self._get_empty_binding_list()
         for dev in self.vjoy_devices.values():
@@ -1485,7 +1485,7 @@ class Profile:
             for input_type in bindings:
                     for item in mode.all_input_items_of_type[input_type]:
                         if item.binding:
-                            bindings[input_type][item.binding] = Binding(item, self)
+                            bindings[input_type][item.binding] = BoundVJoy(item, self)
         self._bound_vjoys = bindings        
         
         # Ensure that the profile contains an entry for every existing
@@ -1723,12 +1723,12 @@ class Profile:
         :return true if there are less bindings than total number of available
         """
         
-        nBindings = len(self._bound_vjoys[input_type])
+        nBoundVJoys = len(self._bound_vjoys[input_type])
         nAvailable = 0
         for dev in self.vjoy_devices.values():
             mode = dev.modes[next(iter(dev.modes))]     # since bindings are shared across all modes, we just look at the first mode
             nAvailable += len(mode.all_input_items_of_type(input_type))
-        return nBindings < nAvailable
+        return nBoundVJoys < nAvailable
     
     def update_binding_list(self, input_item):
         """Updates Profile bindings to from passed input item
@@ -1830,12 +1830,12 @@ class Profile:
 
         return entry
 
-class Binding:
+class BoundVJoy:
     
-    """Stores a set InputItems of identical binding across modes"""
+    """Stores a set VJoy InputItems of identical binding across modes"""
     
     def __init__(self, input_item, parent):
-        """Creates a new Binding instance
+        """Creates a new BoundVJoy instance
 
         :param input_item an InputItem instance used to find equal InputItems
         :param parent the parent Profile of this binding
