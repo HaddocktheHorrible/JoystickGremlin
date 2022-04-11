@@ -1730,6 +1730,17 @@ class Profile:
             nAvailable += len(mode.all_input_items_of_type(input_type))
         return nBoundVJoys < nAvailable
     
+    def update_bound_vjoy_description(self, input_item):
+        """Updates description for VJoys linked to passed input item
+        
+            Description considered "linked" only if a binding is defined
+        
+        :param input_item modified InputItem to update from
+        """
+        if input_item.binding:
+            bound_vjoy = self._bound_vjoys[input_item.input_type][input_item.binding]
+            bound_vjoy.description = input_item.description
+    
     def update_bound_vjoy_registry(self, input_item):
         """Updates Profile bindings to from passed input item
 
