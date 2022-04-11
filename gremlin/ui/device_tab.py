@@ -176,6 +176,8 @@ class InputItemConfiguration(QtWidgets.QFrame):
         :param text the new contents of the text field
         """
         self.item_data.binding = text
+        profile = self.item_data.get_profile()
+        profile.update_bound_vjoy_registry(self.item_data)
         self.binding_changed.emit(text)
 
     def _always_execute_cb(self, state):

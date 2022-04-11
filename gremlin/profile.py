@@ -1730,7 +1730,7 @@ class Profile:
             nAvailable += len(mode.all_input_items_of_type(input_type))
         return nBoundVJoys < nAvailable
     
-    def update_binding_list(self, input_item):
+    def update_bound_vjoy_registry(self, input_item):
         """Updates Profile bindings to from passed input item
 
             Handles binding clears, new binding addition (across all modes), 
@@ -1738,25 +1738,24 @@ class Profile:
         
         :param input_item new/modified InputItem to register
         """
+        old_binding = self.get_binding_from_vjoy(input_item.get_device().device_guid, input_item.input_id, input_item.input_type)
+        new_binding = input_item.binding
         
-        # TODO: finish
-        
-        # remove old binding from current list by searching list by input_item vjoy
-        #   this removes in all cases, including where binding is blank
-        # if input item has a binding:
-        #   create new Binding from input item -- this will remove overlaps and throw warnings
-        #   remove any bindings from current list by searching by input_item.binding
-        #   append new Binding to list
-        # sort of clumsy for lots of modes, but clear
-        
-        bound_vjoy = Binding(input_item, self)
-        old_binding = self.get_binding_from_vjoy(bound_vjoy.vjoy_guid, bound_vjoy.input_id, bound_vjoy.input_type)
+        # update in place or create from new
+        # overlapping bindings handled by BoundVJoy class
         if old_binding:
-            self._bound_vjoys[bound_vjoy.input_type].pop(old_binding)
+            bound_vjoy = self._bound_vjoys[input_item.input_type][old_binding]
+            bound_vjoy.binding = new_binding
+        else:
+            bound_vjoy = BoundVJoy(input_item, self)
         
-        new_binding = bound_vjoy.binding
+        # remove duplicates from bound_vjoy registry
+        for input_type in self._bound_vjoys:
+            self._bound_vjoys[input_type].pop(old_binding, None)
+            self._bound_vjoys[input_type].pop(new_binding, None)
+        
+        # add updated binding back to registry
         if new_binding:
-            self._bound_vjoys[bound_vjoy.input_type].pop(new_binding)
             self._bound_vjoys[bound_vjoy.input_type][new_binding] = bound_vjoy
     
     def empty(self):
