@@ -1653,7 +1653,12 @@ class Profile:
         all_bound_vjoys_in_mode = {}
         for input_type in self._bound_vjoys:
             all_bound_vjoys_in_mode.update(self._bound_vjoys[input_type])
-        return all_bound_vjoys_in_mode[binding]
+        bound_vjoy = all_bound_vjoys_in_mode[binding]
+        return {
+                "device_id": bound_vjoy.device_id,
+                "input_id": bound_vjoy.input_id,
+                "input_type": bound_vjoy.input_type
+                }
     
     def get_all_bindings_in_mode(self, mode_name):
         """Returns all vjoy bindings for given mode
