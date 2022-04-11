@@ -1627,20 +1627,7 @@ class Profile:
                     device.type = DeviceType.Keyboard
                 self.devices[device_guid] = device
             return self.devices[device_guid]
-        
-    def mode_changed_cb(self, new_mode):
-        """Handles mode change.
 
-        Updates stored binding list to match new mode. This isn't strictly needed
-        on each mode change, since the bindings are the same across all modes. However,
-        since we call a "mode" change to update all device tabs when a binding is 
-        updated, we handle an update of the internal binding list on mode change too.
-        
-        :param new_mode the name of the new current mode
-        """    
-        
-        self._bound_vjoys = self.get_all_bindings_in_mode(new_mode)
-    
     def get_vjoy_from_binding(self, binding):
         """Returns VJoy device id, input id, and input type associated with binding
 
