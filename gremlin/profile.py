@@ -1849,8 +1849,10 @@ class BoundVJoy:
         self.input_id = input_item.input_id
         self.input_type = input_item.input_type
         self.description = input_item.description
+        self.input_items = None
         
         # clear overlapping bindings; sync equal inputs and store
+        if self.binding:
         self.update_all_vjoy_items_from_binding()
         self.input_items = self.get_all_vjoy_items_from_id()
         
@@ -1864,6 +1866,7 @@ class BoundVJoy:
         self.__binding = binding
         for item in self.input_items:
             item.binding = binding
+        if binding: # only clear others if a binding is set
         self.update_all_vjoy_items_from_binding()
         
     @property
