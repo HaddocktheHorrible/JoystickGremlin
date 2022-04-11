@@ -1482,11 +1482,11 @@ class Profile:
         bindings = self._get_empty_binding_list()
         for dev in self.vjoy_devices.values():
             for mode in dev.modes.values():
-            for input_type in bindings:
+                for input_type in bindings:
                     for item in mode.all_input_items_of_type[input_type]:
                         if item.binding:
                             bindings[input_type][item.binding] = BoundVJoy(item, self)
-        self._bound_vjoys = bindings        
+        self._bound_vjoys = bindings
         
         # Ensure that the profile contains an entry for every existing
         # device even if it was not part of the loaded XML and
@@ -1659,39 +1659,7 @@ class Profile:
                 "input_id": bound_vjoy.input_id,
                 "input_type": bound_vjoy.input_type
                 }
-    
-    def get_all_bindings_in_mode(self, mode_name):
-        """Returns all vjoy bindings for given mode
-        
-        Clears duplicate bindings and throws warning to log.
-        
-        :param mode_name mode to examine for vjoy bindings
-        :return dict of all vjoy bindings for each input type
-        """
-        
-        # initialize with possible input types
-        bindings = self._get_empty_binding_list()
-        for vjoy_guid, dev in self.vjoy_devices.items():
-            vjoy_id = joystick_handling.vjoy_id_from_guid(vjoy_guid)
-            dev.ensure_mode_exists(mode_name)
-            for input_type in bindings:
-                for item in dev.modes[mode_name].all_input_items_of_type(input_type):
-                    if item.binding in bindings[input_type]:
-                        # throw warning and skip if duplicate binding found
-                        vjoy_name = "vJoy Device {:d}".format(vjoy_id)
-                        input_name = input_to_ui_string(input_type, item.input_id)
-                        warn_str = "Duplicate binding found for {}! Cleared binding and description from {}: {} in mode {}".format(item.binding, vjoy_name, input_name, mode_name)
-                        item.clear_binding(True)
-                        logging.getLogger("system").warning(warn_str)
-                    elif item.binding:
-                        # only store item if a binding is recorded
-                        bindings[input_type][item.binding] = {}
-                        bindings[input_type][item.binding]["device_id"] = vjoy_id
-                        bindings[input_type][item.binding]["input_id"] = item.input_id
-                        bindings[input_type][item.binding]["input_type"] = input_type # this is silly, but makes accessing type from binding easy
-                        bindings[input_type][item.binding]["description"] = item.description # this is also silly
-        return bindings
-    
+
     def get_bindings_of_type(self, input_type):
         """Returns binding entries for given input type
 
@@ -1863,8 +1831,8 @@ class BoundVJoy:
         
         # clear overlapping bindings; sync equal inputs and store
         if self.binding:
-        self.update_all_vjoy_items_from_binding()
-        self.input_items = self.get_all_vjoy_items_from_id()
+            self.update_all_vjoy_items_from_binding()
+            self.input_items = self.get_all_vjoy_items_from_id()
         
     @property
     def binding(self):
@@ -1877,7 +1845,7 @@ class BoundVJoy:
         for item in self.input_items:
             item.binding = binding
         if binding: # only clear others if a binding is set
-        self.update_all_vjoy_items_from_binding()
+            self.update_all_vjoy_items_from_binding()
         
     @property
     def description(self):
