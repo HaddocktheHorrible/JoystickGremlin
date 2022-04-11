@@ -1930,11 +1930,6 @@ class BoundVJoy:
             item.binding = self.binding
             item.description = self.description
     
-    def __del__(self):
-        # delete binding/description from any linked input_items before end
-        for item in self.input_items:
-            item.clear_binding()
-
 class Device:
 
     """Stores the information about a single device including it's modes."""
