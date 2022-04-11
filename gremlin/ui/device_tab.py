@@ -168,9 +168,10 @@ class InputItemConfiguration(QtWidgets.QFrame):
         :param text the new contents of the text field
         """
         self.item_data.description = text
-        profile = self.item_data.get_profile()
-        profile.update_bound_vjoy_description(self.item_data)
         self.description_changed.emit(text)
+        if self.item_data.get_device_type() == DeviceType.VJoy:
+            profile = self.item_data.get_profile()
+            profile.update_bound_vjoy_description(self.item_data)
         
     def _edit_binding_cb(self, text):
         """Handles changes to the binding text field.
@@ -178,9 +179,10 @@ class InputItemConfiguration(QtWidgets.QFrame):
         :param text the new contents of the text field
         """
         self.item_data.binding = text
-        profile = self.item_data.get_profile()
-        profile.update_bound_vjoy_registry(self.item_data)
         self.binding_changed.emit(text)
+        if self.item_data.get_device_type() == DeviceType.VJoy:
+            profile = self.item_data.get_profile()
+            profile.update_bound_vjoy_registry(self.item_data)
 
     def _always_execute_cb(self, state):
         """Handles changes to the always execute checkbox.
