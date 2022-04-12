@@ -664,6 +664,9 @@ class GremlinUi(QtWidgets.QMainWindow):
                 device_profile,
                 self._current_mode
             )
+            
+            # trigger mode change to update all tabs if bound vjoys are changed
+            widget.bound_vjoys_changed.connect(self._mode_changed_cb)
             self.tabs[device.device_guid] = widget
             self.ui.devices.addTab(
                 widget,

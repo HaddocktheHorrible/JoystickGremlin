@@ -319,6 +319,9 @@ class ActionContainerView(common.AbstractView):
 class JoystickDeviceTabWidget(QtWidgets.QWidget):
 
     """Widget used to configure a single device."""
+    
+    # emit signal if any bindings change to trigger mode redraw
+    bound_vjoys_changed = QtCore.pyqtSignal(str)
 
     def __init__(
             self,
@@ -421,7 +424,8 @@ class JoystickDeviceTabWidget(QtWidgets.QWidget):
             widget.action_model.data_changed.connect(change_cb)
             widget.description_changed.connect(change_cb)
             widget.binding_changed.connect(change_cb)
-
+            widget.binding_changed.connect(self._edit_bound_vjoys_cb)
+            
             self.main_layout.addWidget(widget)
 
     def mode_changed_cb(self, mode):
@@ -448,6 +452,11 @@ class JoystickDeviceTabWidget(QtWidgets.QWidget):
         if self.input_item_list_view.current_index is not None:
             self.input_item_selected_cb(self.input_item_list_view.current_index)
 
+    def _edit_bound_vjoys_cb(self):
+        """Emit current mode to trigger mode "change" if device vjoy bindings are changed"""
+        
+        self.bound_vjoys_changed.emit(self.current_mode)
+        
     def _create_change_cb(self, index):
         """Creates a callback handling content changes.
 
