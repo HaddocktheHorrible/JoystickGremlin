@@ -794,8 +794,10 @@ class VJoySelector(AbstractInputSelector):
             if self.profile.has_unbound_vjoys(input_type):
                 self.binding_dropdown.addItem('')
                 break # include blank if at least one unbound binding
+        binding_choices = []
         for input_type in self.valid_types:
-            self.binding_dropdown.addItems(self.profile.get_bindings_of_type(input_type))
+            binding_choices.append(self.profile.get_bindings_of_type(input_type))
+        self.binding_dropdown.addItems(binding_choices.sort())
         self.main_layout.addWidget(self.binding_dropdown)
         self.binding_dropdown.activated.connect(self._update_binding)
         
