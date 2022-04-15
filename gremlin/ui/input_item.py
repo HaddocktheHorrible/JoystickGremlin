@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import enum
-from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5 import QtWidgets, QtCore, QtGui, Qt
 
 import gremlin
 from gremlin.common import DeviceType, InputType
@@ -482,6 +482,7 @@ class InputItemButton(QtWidgets.QFrame):
         )
         self._description_widget = QtWidgets.QLabel("")
         self._binding_widget = QtWidgets.QLabel("")
+        self._binding_widget.setAlignment(Qt.AlignRight)
         self._icon_layout = QtWidgets.QHBoxLayout()
         self._icons = []
 
@@ -507,7 +508,7 @@ class InputItemButton(QtWidgets.QFrame):
 
         :param binding the binding to use
         """
-        self._binding_widget.setText("<i>{}</i>".format(binding))
+        self._binding_widget.setText("<b>{}</b>".format(binding))
     
     def create_action_icons(self, profile_data):
         """Creates the label of this instance.
