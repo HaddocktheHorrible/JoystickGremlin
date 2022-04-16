@@ -1878,7 +1878,7 @@ class BoundVJoy:
         for item in bound_items.difference(equal_items):
             vjoy_name = "vJoy Device {:d}".format(joystick_handling.vjoy_id_from_guid(item.get_device().device_guid))
             input_name = input_to_ui_string(item.input_type, item.input_id)
-            warn_str = "Duplicate binding found for {}! Cleared binding and description from {}: {} in mode {}"\
+            warn_str = "Duplicate binding found for '{}'! Cleared binding and description from {}: {} in mode '{}'"\
                         .format(item.binding, vjoy_name, input_name, item.get_mode().name)
             item.clear_binding()
             logging.getLogger("system").warning(warn_str)
@@ -1889,7 +1889,7 @@ class BoundVJoy:
             if item.binding:
                 vjoy_name = "vJoy Device {:d}".format(joystick_handling.vjoy_id_from_guid(item.get_device().device_guid))
                 input_name = input_to_ui_string(item.input_type, item.input_id)
-                warn_str = "Existing binding overwritten for {}: {} in mode {}! Binding changed from '{}' to '{}'"\
+                warn_str = "Existing binding overwritten for {}: {} in mode '{}'! Binding changed from '{}' to '{}'"\
                             .format(vjoy_name, input_name, item.get_mode().name, item.binding, self.binding)
                 logging.getLogger("system").warning(warn_str)
             item.binding = self.binding
