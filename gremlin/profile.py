@@ -1813,7 +1813,7 @@ class BoundVJoy:
         self.vjoy_id = joystick_handling.vjoy_id_from_guid(self.vjoy_guid)
         self.input_id = input_item.input_id
         self.input_type = input_item.input_type
-        self.description = input_item.description
+        self.__description = input_item.description
         self.input_items = None
         
         # clear overlapping bindings; sync equal inputs and store
