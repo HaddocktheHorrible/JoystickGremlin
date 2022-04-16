@@ -1808,7 +1808,7 @@ class BoundVJoy:
         
         # create binding from passed input_item
         self.parent = parent
-        self.binding = input_item.binding
+        self.__binding = input_item.binding
         self.vjoy_guid = input_item.get_device().device_guid
         self.vjoy_id = joystick_handling.vjoy_id_from_guid(self.vjoy_guid)
         self.input_id = input_item.input_id
