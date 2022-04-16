@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import enum
-from PyQt5 import QtWidgets, QtCore, QtGui, Qt
+from PyQt5 import QtWidgets, QtCore, QtGui
 
 import gremlin
 from gremlin.common import DeviceType, InputType
@@ -482,7 +482,7 @@ class InputItemButton(QtWidgets.QFrame):
         )
         self._description_widget = QtWidgets.QLabel("")
         self._binding_widget = QtWidgets.QLabel("")
-        self._binding_widget.setAlignment(Qt.AlignRight)
+        self._binding_widget.setAlignment(QtCore.Qt.AlignRight)
         self._icon_layout = QtWidgets.QHBoxLayout()
         self._icons = []
 
