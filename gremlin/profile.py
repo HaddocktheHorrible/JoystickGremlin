@@ -1642,7 +1642,7 @@ class Profile:
             all_bound_vjoys_in_mode.update(self._bound_vjoys[input_type])
         bound_vjoy = all_bound_vjoys_in_mode[binding]
         return {
-                "device_id": bound_vjoy.device_id,
+                "device_id": bound_vjoy.vjoy_id,
                 "input_id": bound_vjoy.input_id,
                 "input_type": bound_vjoy.input_type
                 }
