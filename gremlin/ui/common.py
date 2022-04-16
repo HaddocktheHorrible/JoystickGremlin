@@ -750,9 +750,10 @@ class VJoySelector(AbstractInputSelector):
         # if binding passed, use that to populate vjoy instead of super func
         # since this also calls _self.chage_cb, this also gives us a convenient way to set 
         # preference for binding assignments during ui initialization
+        # if passed binding no longer exists -- set binding from vjoy
         if self.profile is None:
             super().set_selection(input_type, device_id, input_id)
-        elif binding:
+        elif binding and self.binding_dropdown.findText(binding) != -1:
             self.binding_dropdown.setCurrentText(binding)
             self._update_binding()
         else:
