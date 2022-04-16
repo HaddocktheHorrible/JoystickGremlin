@@ -123,7 +123,7 @@ class InputItemConfiguration(QtWidgets.QFrame):
         )
         self.binding_field = QtWidgets.QLineEdit()
         self.binding_field.setText(self.item_data.binding)
-        self.binding_field.textChanged.connect(self._edit_binding_cb)
+        self.binding_field.editingFinished.connect(self._edit_binding_cb)
         self.binding_layout.addWidget(self.binding_field)
 
         self.main_layout.addLayout(self.binding_layout)
@@ -173,11 +173,11 @@ class InputItemConfiguration(QtWidgets.QFrame):
             profile.update_bound_vjoy_description(self.item_data)
         self.description_changed.emit(text)
         
-    def _edit_binding_cb(self, text):
-        """Handles changes to the binding text field.
+    def _edit_binding_cb(self):
+        """Handles changes to the binding text field. Call when editing is finished.
 
-        :param text the new contents of the text field
         """
+        text = self.binding_field.text()
         self.item_data.binding = text
         if self.item_data.get_device_type() == DeviceType.VJoy:
             profile = self.item_data.get_profile()
