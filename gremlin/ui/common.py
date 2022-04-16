@@ -792,12 +792,15 @@ class VJoySelector(AbstractInputSelector):
         self.binding_dropdown.setMaxVisibleItems(20)
         for input_type in self.valid_types:
             if self.profile.has_unbound_vjoys(input_type):
-                self.binding_dropdown.addItem('')
+                self.binding_dropdown.addItem("")
                 break # include blank if at least one unbound binding
-        binding_choices = []
+        binding_choices = list()
         for input_type in self.valid_types:
-            binding_choices.append(self.profile.get_bindings_of_type(input_type))
-        self.binding_dropdown.addItems(binding_choices.sort())
+            bindings_of_type = self.profile.get_bindings_of_type(input_type)
+            if bindings_of_type:
+                binding_choices += bindings_of_type
+        binding_choices.sort() # sort for alphabetical order
+        self.binding_dropdown.addItems(binding_choices)
         self.main_layout.addWidget(self.binding_dropdown)
         self.binding_dropdown.activated.connect(self._update_binding)
         
