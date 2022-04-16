@@ -1483,7 +1483,7 @@ class Profile:
         for dev in self.vjoy_devices.values():
             for mode in dev.modes.values():
                 for input_type in bindings:
-                    for item in mode.all_input_items_of_type[input_type]:
+                    for item in mode.all_input_items_of_type(input_type):
                         if item.binding:
                             bindings[input_type][item.binding] = BoundVJoy(item, self)
         self._bound_vjoys = bindings
