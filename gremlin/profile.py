@@ -1723,7 +1723,19 @@ class Profile:
         # add updated binding back to registry
         if new_binding:
             self._bound_vjoys[bound_vjoy.input_type][new_binding] = bound_vjoy
-    
+            
+    def sync_device_bindings(self, device_guid=None):
+        """Update bindings for given device
+        
+        Used to populate existing bindings to newly created modes
+        
+        :param device_guid device to match for updates on just one device
+        """
+        for input_type in self._bound_vjoys:
+            for bound_vjoy in self._bound_vjoys[input_type].values():
+                if device_guid == bound_vjoy.vjoy_guid:
+                    bound_vjoy.update_all_vjoy_items_from_binding()
+
     def empty(self):
         """Returns whether or not a profile is empty.
 
@@ -1923,6 +1935,7 @@ class Device:
             mode = Mode(self)
             mode.name = mode_name
             self.modes[mode.name] = mode
+            self.parent.sync_device_bindings(self.device_guid)
 
         if device is not None:
             for i in range(device.axis_count):
