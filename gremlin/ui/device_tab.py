@@ -392,10 +392,25 @@ class JoystickDeviceTabWidget(QtWidgets.QWidget):
                 device.is_virtual and \
                 not vjoy_as_input.get(device.vjoy_id, False):
             label = QtWidgets.QLabel(
-                "This tab allows assigning a response curve to virtual axis. "
-                "The purpose of this is to enable split and merge axis to be "
-                "customized to a user's needs with regards to dead zone and "
-                "response curve."
+                "This tab allows the user to assign bindings to individual "
+                "virtual outputs. Each binding defined can then be selected "
+                "from remap actions instead of selecting the bound virtual "
+                "device and output manually. If the binding is transferred "
+                "to a different virtual output, the remap action will follow. "
+                "This allows the user to simply assign all bindings to "
+                "virtual outputs based on desired in-game mapping, then to "
+                "directly map from physical devices to those bindings.\n\n"
+                "Bindings are forced to be unique to a single virtual "
+                "device/output combination, but are available across all "
+                "modes. That is, each virtual output is mapped to a "
+                "single in-game binding, regardless of mode. The user can "
+                "still create mode-specific mappings of multiple physical "
+                "inputs to the same virtual output.\n\n"
+                "From this tab, the user can also provide a response curve to each "
+                "virtual axis. The purpose of this is to enable split and "
+                "merge axis to be customized to a user's needs with regards "
+                "to dead zone and response curve. These curves can be "
+                "individually tailored to each mode, regardless of binding."
             )
             label.setStyleSheet("QLabel { background-color : '#FFF4B0'; }")
             label.setWordWrap(True)
