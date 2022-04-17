@@ -481,17 +481,24 @@ class InputItemButton(QtWidgets.QFrame):
             )
         )
         self._description_widget = QtWidgets.QLabel("")
-        self._binding_widget = QtWidgets.QLabel("")
-        self._binding_widget.setAlignment(QtCore.Qt.AlignRight)
         self._icon_layout = QtWidgets.QHBoxLayout()
         self._icons = []
+        
+        # create right-aligned binding widget -- expand horizontally to push description to left
+        self._binding_widget = QtWidgets.QLabel("")
+        self._binding_widget.setAlignment(QtCore.Qt.AlignRight)
+        self._binding_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
 
         self.setFrameShape(QtWidgets.QFrame.Box)
         self.main_layout = QtWidgets.QGridLayout(self)
         self.main_layout.addWidget(self._label_widget, 0, 0)
         self.main_layout.addWidget(self._description_widget, 0, 1)
-        self.main_layout.addWidget(self._binding_widget, 0, 2)
-        self.main_layout.addLayout(self._icon_layout, 0, 3)
+        
+        # use binding for third column only for vjoy devices; else use action icon
+        if self.identifier.device_type == DeviceType.VJoy:
+            self.main_layout.addWidget(self._binding_widget, 0, 2)
+        else:
+            self.main_layout.addLayout(self._icon_layout, 0, 2)
         self.main_layout.setColumnMinimumWidth(0, 50)
 
         self.setMinimumWidth(300)
@@ -508,7 +515,7 @@ class InputItemButton(QtWidgets.QFrame):
 
         :param binding the binding to use
         """
-        self._binding_widget.setText("<b>{}</b>".format(binding))
+        self._binding_widget.setText("{}".format(binding))
     
     def create_action_icons(self, profile_data):
         """Creates the label of this instance.
