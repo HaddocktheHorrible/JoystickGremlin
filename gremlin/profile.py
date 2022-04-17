@@ -1399,18 +1399,21 @@ class Profile:
         """
         vjoy_devices = joystick_handling.vjoy_devices()
 
-        # Create list of all inputs provided by the vjoy devices
+        # Create list of all inputs provided by the vjoy output devices
         vjoy = {}
         for entry in vjoy_devices:
-            vjoy[entry.vjoy_id] = {"axis": [], "button": [], "hat": []}
+            vid = entry.vjoy_id
+            if vid in self.settings.vjoy_as_input.keys() and self.settings.vjoy_as_input[vid]:
+                continue # skip vjoy_as_input entries
+            vjoy[vid] = {"axis": [], "button": [], "hat": []}
             for i in range(entry.axis_count):
-                vjoy[entry.vjoy_id]["axis"].append(
+                vjoy[vid]["axis"].append(
                     entry.axis_map[i].axis_index
                 )
             for i in range(entry.button_count):
-                vjoy[entry.vjoy_id]["button"].append(i+1)
+                vjoy[vid]["button"].append(i+1)
             for i in range(entry.hat_count):
-                vjoy[entry.vjoy_id]["hat"].append(i+1)
+                vjoy[vid]["hat"].append(i+1)
 
         # List all input types
         all_input_types = [
