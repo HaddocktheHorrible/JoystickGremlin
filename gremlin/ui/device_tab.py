@@ -51,9 +51,13 @@ class InputItemConfiguration(QtWidgets.QFrame):
         self.widget_layout = QtWidgets.QVBoxLayout()
 
         self._create_description()
-        if self.item_data.parent.parent.type == gremlin.common.DeviceType.VJoy:
-            self._create_binding() # only create binding box if vjoy -- does this make sense for vjoy as input?
-            self._create_vjoy_dropdowns()
+        
+        # only create binding for vjoy outputs
+        # only create dropdowns for vjoy axes (since that was the original intention of this tab)
+        if self.item_data.get_device_type() == DeviceType.VJoy:
+            self._create_binding()
+            if self.item_data.input_type == InputType.JoystickAxis:
+                self._create_vjoy_dropdowns()
         else:
             self._create_dropdowns()
 
