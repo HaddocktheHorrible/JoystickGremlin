@@ -1,8 +1,8 @@
-Joystick Gremlin
-================
+# Joystick Gremlin
 
-Introduction
-------------
+## Introduction
+
+---
 
 Joystick Gremlin is a program that allows the configuration of joystick like
 devices, similar to what CH Control Manager and Thrustmaster's T.A.R.G.E.T. do
@@ -15,6 +15,7 @@ managing joysticks, Joystick Gremlin also provides keyboard macros, a flexible
 mode system, scripting using Python, and many other features.
 
 The main features are:
+
 - Works with arbitrary joystick like devices
 - User interface for common configuration tasks
 - Merging of multiple physical devices into a single virtual device
@@ -26,11 +27,12 @@ The main features are:
 Joystick Gremlin provides a graphical user interface which allows commonly
 performed tasks, such as input remapping, axis response curve setups, and macro
 recording to be performed easily. Functionality that is not accessible via the
-UI can be implemented through custom modules. 
+UI can be implemented through custom modules.
 
+## Used Software & Other Sources
 
-Used Software & Other Sources
------------------------------
+---
+
 Joystick Gremlin uses the following software and resources:
 
 - [pyinstaller](http://www.pyinstaller.org/)
@@ -40,26 +42,16 @@ Joystick Gremlin uses the following software and resources:
 - [Python 3.4](https://www.python.org)
 - [Modern UI Icons](http://modernuiicons.com/)
 
-Currently the 32bit version of Python is needed and the following packages should be installed via PiP to get the source running:
- 
- - PyQT5
- - pypiwin32
- 
-Update:
+Currently the 32bit version of Python is needed. To create and activate a conda environment with the required modules, simply call:
 
-Looks like he relies on a bunch of stuff that isn't properly configured in the environment. These are the steps needed to create the environment from scratch:
-
-```
-conda create -n joystick_gremlin32 python=3.6
+```bash
+conda env create -f conda_env.yaml
 conda activate joystick_gremlin32
-conda config --env --set subdir win-32 # this sets the env platform to win 32-bit
-conda install python=3.6  # this re-installs 32-bit python 3.6
-pip install pyqt5
-pip install pypiwin32
-conda install reportlab   # needed for the cheatsheet
 ```
-Generating the MSI Installer
-----------------------------
+
+## Generating the MSI Installer
+
+---
 
 The job of turning the Python code in a windows executable and
 packaging everything up into an installable MSI file is performed
@@ -67,13 +59,16 @@ by [pyinstaller](http://www.pyinstaller.org/) and
 [wix](http://wixtoolset.org/). The steps needed to build the code
 and assemble it into the installer is automated using a batch
 script and can be run as:
-  ```
-  deploy.bat
-  ```
+
+```powershell
+deploy.bat
+```
+
+**Note:** This does not play nicely with the conda environment created above. Update TBD...
+
 To simply generate the executable code without the MSI installer the
 following command can be used:
-  ```
-  pyinstaller -y --clean joystick_gremlin.spec
-  ```
 
-Missing a bunch of modules this way. Unclear if they need to be installed manually - try again tomorrow.
+```bash
+pyinstaller -y --clean joystick_gremlin.spec
+```
