@@ -407,7 +407,7 @@ class Remap(gremlin.base_classes.AbstractAction):
                 )
 
             self.vjoy_device_id = safe_read(node, "vjoy", int)
-            self.binding = safe_read(node, "binding", str, '')
+            self.binding = safe_read(node, "binding", str, '').strip()
 
             if self.get_input_type() == InputType.JoystickAxis and \
                     self.input_type == InputType.JoystickAxis:

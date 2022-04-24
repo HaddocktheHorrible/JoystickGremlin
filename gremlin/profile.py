@@ -2161,7 +2161,7 @@ class InputItem:
         self.input_type = InputType.to_enum(node.tag)
         self.input_id = safe_read(node, "id", int)
         self.description = safe_read(node, "description", str)
-        self.binding = safe_read(node, "binding", str)
+        self.binding = safe_read(node, "binding", str).strip()
         self.always_execute = read_bool(node, "always-execute", False)
         if self.input_type == InputType.Keyboard:
             self.input_id = (self.input_id, read_bool(node, "extended"))

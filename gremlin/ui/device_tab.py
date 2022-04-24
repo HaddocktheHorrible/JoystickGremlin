@@ -181,7 +181,7 @@ class InputItemConfiguration(QtWidgets.QFrame):
         """Handles changes to the binding text field. Call when editing is finished.
 
         """
-        text = self.binding_field.text()
+        text = self.binding_field.text().strip()
         self.item_data.binding = text
         if self.item_data.get_device_type() == DeviceType.VJoy:
             profile = self.item_data.get_profile()
