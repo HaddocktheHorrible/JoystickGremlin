@@ -1196,3 +1196,220 @@ class SwapDevicesUi(common.BaseDialogUi):
             150
         )
         self.input_dialog.show()
+
+class BindingExportUi(common.BaseDialogUi):
+
+    """UI allowing user to export current bindings to game-specific file."""
+
+    def __init__(self, profile_data, parent=None):
+        """Creates a new options UI instance.
+
+        :param parent the parent of this widget
+        """
+        super().__init__(parent)
+
+        # Actual configuration object being managed
+        self.config = gremlin.config.Configuration()
+        self._profile = profile_data
+        self.setMinimumWidth(400)
+        self.setWindowTitle("Binding Export")
+
+        self._create_ui()
+
+    def _create_ui(self):
+        """Creates the profile options page."""
+        self.main_layout = QtWidgets.QVBoxLayout(self)
+
+        # edit in place option
+        self.export_in_place_checkbox = QtWidgets.QCheckBox(
+            "Edit template in place"
+        )
+        self.export_in_place_checkbox.clicked.connect(self._export_in_place)
+        self.export_in_place_checkbox.setChecked(self.config.export_in_place)
+
+        # exporter dropdown list
+        self.exporter_layout = QtWidgets.QHBoxLayout()
+        self.exporter_label = QtWidgets.QLabel("Exporter")
+        self.exporter_selection = QtWidgets.QComboBox()
+        self.exporter_selection.setMinimumWidth(300)
+        self.exporter_selection.currentTextChanged.connect(
+            self._show_exporter
+        )
+        self.exporter_add = QtWidgets.QPushButton()
+        self.exporter_add.setIcon(QtGui.QIcon("gfx/button_add.png"))
+        self.exporter_add.clicked.connect(self._new_exporter)
+        self.exporter_remove = QtWidgets.QPushButton()
+        self.exporter_remove.setIcon(QtGui.QIcon("gfx/button_delete.png"))
+        self.exporter_remove.clicked.connect(self._remove_exporter)
+        self.exporter_edit = QtWidgets.QPushButton()
+        self.exporter_edit.setIcon(QtGui.QIcon("gfx/button_edit.png"))
+        self.exporter_edit.clicked.connect(self._edit_exporter)
+
+        self.exporter_layout.addWidget(self.exporter_label)
+        self.exporter_layout.addWidget(self.exporter_selection)
+        self.exporter_layout.addWidget(self.exporter_add)
+        self.exporter_layout.addWidget(self.exporter_remove)
+        self.exporter_layout.addWidget(self.exporter_edit)
+        self.exporter_layout.addStretch()
+
+        self.args_layout = QtWidgets.QHBoxLayout()
+        self.args_label = QtWidgets.QLabel("Arguments")
+        self.args_field = QtWidgets.QLineEdit()
+        self.args_field.textChanged.connect(self._update_args)
+        self.args_field.editingFinished.connect(self._update_args)
+        self.args_select = QtWidgets.QPushButton()
+        self.args_select.setIcon(QtGui.QIcon("gfx/button_edit.png"))
+        self.args_select.clicked.connect(self._append_filepath)
+
+        self.args_layout.addWidget(self.args_label)
+        self.args_layout.addWidget(self.args_field)
+        self.args_layout.addWidget(self.args_select)
+
+        self.main_layout.addWidget(self.export_in_place_checkbox)
+        self.main_layout.addLayout(self.exporter_layout)
+        self.main_layout.addLayout(self.args_layout)
+        self.main_layout.addStretch()
+        
+        self.exporter_help = QtWidgets.QLabel(
+            "Exporters print VJoy bindings to a game-specific configuration file. "
+            "Optional arguments may be passed to the exporter function above. "
+            "Help for the selected exporter is listed in this dialog once an "
+            "exporter is selected."
+        )
+        self.exporter_help.setStyleSheet("QLabel { background-color : '#FFF4B0'; }")
+        self.exporter_help.setWordWrap(True)
+        self.exporter_help.setFrameShape(QtWidgets.QFrame.Box)
+        self.exporter_help.setMargin(10)
+        self.main_layout.addWidget(self.exporter_help)
+        
+        self.export_button = QtWidgets.QPushButton("Export")
+        self.export_button.clicked.connect(self._run_exporter)
+        self.main_layout.addWidget(self.export_button)
+        
+        self.populate_exporters()
+
+    def closeEvent(self, event):
+        """Closes the calibration window.
+
+        :param event the close event
+        """
+        super().closeEvent(event)
+
+    def populate_executables(self, executable_name=None):
+        """Populates the profile drop down menu.
+
+        :param executable_name name of the executable to pre select
+        """
+        self.profile_field.textChanged.disconnect(self._update_profile)
+        self.executable_selection.clear()
+        executable_list = self.config.get_executable_list()
+        for path in executable_list:
+            self.executable_selection.addItem(path)
+        self.profile_field.textChanged.connect(self._update_profile)
+
+        # Select the provided executable if it exists, otherwise the first one
+        # in the list
+        index = 0
+        if executable_name is not None and executable_name in executable_list:
+            index = self.executable_selection.findText(executable_name)
+        self.executable_selection.setCurrentIndex(index)
+
+    def _list_executables(self):
+        """Shows a list of executables for the user to pick."""
+        self.executable_list_view = ProcessWindow()
+        self.executable_list_view.process_selected.connect(self._add_executable)
+        self.executable_list_view.show()
+
+    def _add_executable(self, fname):
+        """Adds the provided executable to the list of configurations.
+
+        :param fname the executable for which to add a mapping
+        """
+        if fname not in self.config.get_executable_list():
+            self.config.set_profile(fname, "")
+            self.populate_executables(fname)
+        else:
+            self.executable_selection.setCurrentIndex(
+                self.executable_selection.findText(fname)
+            )
+
+    def _edit_executable(self):
+        """Allows editing the path of an executable."""
+        new_text, flag = QtWidgets.QInputDialog.getText(
+            self,
+            "Change Executable / RegExp",
+            "Change the executable text or enter a regular expression to use.",
+            QtWidgets.QLineEdit.Normal,
+            self.executable_selection.currentText()
+        )
+
+        # If the user did click on ok update the entry
+        old_entry = self.executable_selection.currentText()
+        if flag:
+            if old_entry not in self.config.get_executable_list():
+                self._add_executable(new_text)
+            else:
+                self.config.set_profile(
+                    new_text,
+                    self.config.get_profile(old_entry)
+                )
+                self.config.remove_profile(old_entry)
+                self.populate_executables(new_text)
+
+    def _new_executable(self):
+        """Prompts the user to select a new executable to add to the
+        profile.
+        """
+        fname, _ = QtWidgets.QFileDialog.getOpenFileName(
+            None,
+            "Path to executable",
+            "C:\\",
+            "Executable (*.exe)"
+        )
+        if fname != "":
+            self._add_executable(fname)
+
+    def _remove_executable(self):
+        """Removes the current executable from the configuration."""
+        self.config.remove_profile(self.executable_selection.currentText())
+        self.populate_executables()
+
+    def _select_profile(self):
+        """Displays a file selection dialog for a profile.
+
+        If a valid file is selected the mapping from executable to
+        profile is updated.
+        """
+        fname, _ = QtWidgets.QFileDialog.getOpenFileName(
+            None,
+            "Path to executable",
+            gremlin.util.userprofile_path(),
+            "Profile (*.xml)"
+        )
+        if fname != "":
+            self.profile_field.setText(fname)
+            self.config.set_profile(
+                self.executable_selection.currentText(),
+                self.profile_field.text()
+            )
+
+    def _show_executable(self, exec_path):
+        """Displays the profile associated with the given executable.
+
+        :param exec_path path to the executable to shop
+        """
+        self.profile_field.setText(self.config.get_profile(exec_path))
+
+    def _show_mode_change_message(self, clicked):
+        """Stores the user's preference for mode change notifications.
+
+        :param clicked whether or not the checkbox is ticked"""
+        self.config.mode_change_message = clicked
+        self.config.save()
+
+    def _update_profile(self):
+        """Updates the profile associated with the current executable."""
+        self.config.set_profile(
+            self.executable_selection.currentText(),
+            self.profile_field.text()
+        )
