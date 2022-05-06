@@ -7,7 +7,11 @@ import logging
 
 ignore_pattern = ["[", ";"]
 ignore_binding = ["#"]
-vjoy_map = {} # todo: fill this with clod device name to vjoy_id mapping
+vjoy_map = {
+    1: "vJoy_Device-66210FF9",
+    2: "vJoy_Device-A4E92C9",
+    3: "vJoy_Device-BBF5032F"
+    } # todo: replace with profile-based lookup
 
 axis_id_to_string = {
     1: "X",
@@ -23,32 +27,30 @@ axis_id_to_string = {
 def export(bound_vjoy_list,template_file):
     
     fid = open(template_file, 'r')
-    file = fid.readlines()
-    for line in file:
-        
-        # skip empty or comment lines
-        # todo: fix this to keep line as-is
-        line = line.strip()
-        if not line or line[0] in ignore_pattern:
-            continue
-        
-        # get binding and assignment
-        binding = line.split("=")[-1].strip()
-        assignment = line.split("=")[0].strip()
-        
-        if binding in bound_vjoy_list.keys():
-            bound_item = bound_vjoy_list[binding]
-            line = vjoy_item2clod_item(bound_item)
-            bound_vjoy_list.pop(binding)
-        elif assignment.split("+")[0] in vjoy_map.values():
-            # remove old assignment from output data
-            line = "; =%s".format(binding)
-        
-        # todo: write lines to file
+    oldfile = fid.readlines()
+    newfile = []
     
+    # overwrite old bindings in-place
+    for line in oldfile:
+        line = line.strip()
+        if line and line[0] not in ignore_pattern:
+            binding = line.split("=")[-1].strip()
+            assignment = line.split("=")[0].strip()
+            if binding in bound_vjoy_list.keys():
+                bound_item = bound_vjoy_list[binding]
+                line = vjoy_item2clod_item(bound_item)
+                bound_vjoy_list.pop(binding)
+            elif assignment.split("+")[0] in vjoy_map.values():
+                # remove old assignment from output data
+                line = "; =%s".format(binding)
+        newfile.append(line)
+    
+    # append unsorted bindings to file
+    newfile.append(["[Unsorted Gremlin Bindings]\n"])
     for bound_item in bound_vjoy_list.values():
-        line = vjoy_item2clod_item(bound_item)
-        # todo: write lines to file
+        newfile.append(vjoy_item2clod_item(bound_item))
+        
+    return newfile
         
 def vjoy_item2clod_item(bound_item):
     """Return vjoy to string for clod
