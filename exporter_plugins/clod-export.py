@@ -30,6 +30,8 @@ def export(bound_vjoy_list,template_file):
     oldfile = fid.readlines()
     newfile = []
     
+    bound_vjoy_list = remove_commented_items(bound_vjoy_list)
+    
     # overwrite old bindings in-place
     for line in oldfile:
         line = line.strip()
@@ -51,6 +53,14 @@ def export(bound_vjoy_list,template_file):
         newfile.append(vjoy_item2clod_item(bound_item))
         
     return newfile
+
+def remove_commented_items(bound_vjoy_list):
+    """Removes bindings flagged with comment string"""
+    cleaned_vjoy_list = {}
+    for binding, vjoy_item in bound_vjoy_list.items():
+        if binding[0] not in ignore_binding:
+            cleaned_vjoy_list[binding] = vjoy_item
+    return cleaned_vjoy_list
         
 def vjoy_item2clod_item(bound_item):
     """Return vjoy to string for clod
