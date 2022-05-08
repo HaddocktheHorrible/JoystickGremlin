@@ -1201,6 +1201,9 @@ class Settings:
         self.vjoy_initial_values = {}
         self.startup_mode = None
         self.default_delay = 0.05
+        self.exporter_path = []
+        self.exporter_arg_string = []
+        self.exporter_template_path = []
 
     def to_xml(self):
         """Returns an XML node containing the settings.
@@ -1237,7 +1240,14 @@ class Settings:
                 axis_node.set("value", safe_format(value, float))
                 vjoy_node.append(axis_node)
             node.append(vjoy_node)
-
+            
+        # Exporter settings
+        exporter_node = ElementTree.Element("exporter")
+        exporter_node.set("script-path", safe_format(self.exporter_path, str))
+        exporter_node.set("args", safe_format(self.exporter_arg_string, str))
+        exporter_node.set("template-path", safe_format(self.exporter_template_path, str))
+        node.append(exporter_node)
+        
         return node
 
     def from_xml(self, node):
@@ -1273,6 +1283,16 @@ class Settings:
                 aid = safe_read(axis_node, "id", int)
                 value = safe_read(axis_node, "value", float, 0.0)
                 self.vjoy_initial_values[vid][aid] = value
+            
+        # Exporter settings
+        self.exporter_path = []
+        self.exporter_arg_string = []
+        self.exporter_template_path = []
+        for exporter_node in node.findall("exporter"):
+            self.exporter_path = safe_read(exporter_node, "script-path")
+            self.exporter_arg_string = safe_read(exporter_node, "args")
+            self.exporter_template_path = safe_read(exporter_node, "template-path")
+        
 
     def get_initial_vjoy_axis_value(self, vid, aid):
         """Returns the initial value a vJoy axis should use.
