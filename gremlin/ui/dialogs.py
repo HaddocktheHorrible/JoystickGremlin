@@ -19,6 +19,7 @@ import os
 import subprocess
 import sys
 import winreg
+import importlib
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -1233,7 +1234,7 @@ class BindingExportUi(common.BaseDialogUi):
         self.exporter_selection = QtWidgets.QComboBox()
         self.exporter_selection.setMinimumWidth(300)
         self.exporter_selection.currentTextChanged.connect(
-            self._show_exporter
+            self._select_exporter
         )
         self.exporter_add = QtWidgets.QPushButton()
         self.exporter_add.setIcon(QtGui.QIcon("gfx/button_add.png"))
@@ -1283,7 +1284,7 @@ class BindingExportUi(common.BaseDialogUi):
         self.main_layout.addWidget(self.exporter_help)
         
         self.export_button = QtWidgets.QPushButton("Export")
-        self.export_button.clicked.connect(self._run_exporter)
+        self.export_button.clicked.connect(self.run_exporter)
         self.main_layout.addWidget(self.export_button)
         
         self.populate_exporters()
@@ -1294,122 +1295,137 @@ class BindingExportUi(common.BaseDialogUi):
         :param event the close event
         """
         super().closeEvent(event)
+        
+    # def populate_executables(self, executable_name=None):
+    #     """Populates the profile drop down menu.
 
-    def populate_executables(self, executable_name=None):
-        """Populates the profile drop down menu.
+    #     :param executable_name name of the executable to pre select
+    #     """
+    #     self.profile_field.textChanged.disconnect(self._update_profile)
+    #     self.executable_selection.clear()
+    #     executable_list = self.config.get_executable_list()
+    #     for path in executable_list:
+    #         self.executable_selection.addItem(path)
+    #     self.profile_field.textChanged.connect(self._update_profile)
 
-        :param executable_name name of the executable to pre select
-        """
-        self.profile_field.textChanged.disconnect(self._update_profile)
-        self.executable_selection.clear()
-        executable_list = self.config.get_executable_list()
-        for path in executable_list:
-            self.executable_selection.addItem(path)
-        self.profile_field.textChanged.connect(self._update_profile)
+    #     # Select the provided executable if it exists, otherwise the first one
+    #     # in the list
+    #     index = 0
+    #     if executable_name is not None and executable_name in executable_list:
+    #         index = self.executable_selection.findText(executable_name)
+    #     self.executable_selection.setCurrentIndex(index)
+        
+    def _run_exporter(self):
+        """Execute selected exporter with optional args"""
+        
+        # prep chosen exporter to run
+        spec = importlib.util.spec_from_file_location("exporter_module",self.exporter_path)
+        exporter = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(exporter)
+        
+        # run the exporter
+        # todo: wrap in try-catch... check export is implemented and valid
+        exporter.export(self._profile.get_all_bound_vjoys(),self.exporter_template)
+        
+        # todo: save output based on overwrite template or prompt for file
+        return -1
 
-        # Select the provided executable if it exists, otherwise the first one
-        # in the list
-        index = 0
-        if executable_name is not None and executable_name in executable_list:
-            index = self.executable_selection.findText(executable_name)
-        self.executable_selection.setCurrentIndex(index)
+    # def _list_executables(self):
+    #     """Shows a list of executables for the user to pick."""
+    #     self.executable_list_view = ProcessWindow()
+    #     self.executable_list_view.process_selected.connect(self._add_executable)
+    #     self.executable_list_view.show()
 
-    def _list_executables(self):
-        """Shows a list of executables for the user to pick."""
-        self.executable_list_view = ProcessWindow()
-        self.executable_list_view.process_selected.connect(self._add_executable)
-        self.executable_list_view.show()
+    # def _add_executable(self, fname):
+    #     """Adds the provided executable to the list of configurations.
 
-    def _add_executable(self, fname):
-        """Adds the provided executable to the list of configurations.
+    #     :param fname the executable for which to add a mapping
+    #     """
+    #     if fname not in self.config.get_executable_list():
+    #         self.config.set_profile(fname, "")
+    #         self.populate_executables(fname)
+    #     else:
+    #         self.executable_selection.setCurrentIndex(
+    #             self.executable_selection.findText(fname)
+    #         )
 
-        :param fname the executable for which to add a mapping
-        """
-        if fname not in self.config.get_executable_list():
-            self.config.set_profile(fname, "")
-            self.populate_executables(fname)
-        else:
-            self.executable_selection.setCurrentIndex(
-                self.executable_selection.findText(fname)
-            )
+    # def _edit_executable(self):
+    #     """Allows editing the path of an executable."""
+    #     new_text, flag = QtWidgets.QInputDialog.getText(
+    #         self,
+    #         "Change Executable / RegExp",
+    #         "Change the executable text or enter a regular expression to use.",
+    #         QtWidgets.QLineEdit.Normal,
+    #         self.executable_selection.currentText()
+    #     )
 
-    def _edit_executable(self):
-        """Allows editing the path of an executable."""
-        new_text, flag = QtWidgets.QInputDialog.getText(
-            self,
-            "Change Executable / RegExp",
-            "Change the executable text or enter a regular expression to use.",
-            QtWidgets.QLineEdit.Normal,
-            self.executable_selection.currentText()
-        )
+    #     # If the user did click on ok update the entry
+    #     old_entry = self.executable_selection.currentText()
+    #     if flag:
+    #         if old_entry not in self.config.get_executable_list():
+    #             self._add_executable(new_text)
+    #         else:
+    #             self.config.set_profile(
+    #                 new_text,
+    #                 self.config.get_profile(old_entry)
+    #             )
+    #             self.config.remove_profile(old_entry)
+    #             self.populate_executables(new_text)
 
-        # If the user did click on ok update the entry
-        old_entry = self.executable_selection.currentText()
-        if flag:
-            if old_entry not in self.config.get_executable_list():
-                self._add_executable(new_text)
-            else:
-                self.config.set_profile(
-                    new_text,
-                    self.config.get_profile(old_entry)
-                )
-                self.config.remove_profile(old_entry)
-                self.populate_executables(new_text)
+    # def _new_executable(self):
+    #     """Prompts the user to select a new executable to add to the
+    #     profile.
+    #     """
+    #     fname, _ = QtWidgets.QFileDialog.getOpenFileName(
+    #         None,
+    #         "Path to executable",
+    #         "C:\\",
+    #         "Executable (*.exe)"
+    #     )
+    #     if fname != "":
+    #         self._add_executable(fname)
 
-    def _new_executable(self):
-        """Prompts the user to select a new executable to add to the
-        profile.
-        """
-        fname, _ = QtWidgets.QFileDialog.getOpenFileName(
-            None,
-            "Path to executable",
-            "C:\\",
-            "Executable (*.exe)"
-        )
-        if fname != "":
-            self._add_executable(fname)
+    # def _remove_executable(self):
+    #     """Removes the current executable from the configuration."""
+    #     self.config.remove_profile(self.executable_selection.currentText())
+    #     self.populate_executables()
 
-    def _remove_executable(self):
-        """Removes the current executable from the configuration."""
-        self.config.remove_profile(self.executable_selection.currentText())
-        self.populate_executables()
+    # def _select_profile(self):
+    #     """Displays a file selection dialog for a profile.
 
-    def _select_profile(self):
-        """Displays a file selection dialog for a profile.
+    #     If a valid file is selected the mapping from executable to
+    #     profile is updated.
+    #     """
+    #     fname, _ = QtWidgets.QFileDialog.getOpenFileName(
+    #         None,
+    #         "Path to executable",
+    #         gremlin.util.userprofile_path(),
+    #         "Profile (*.xml)"
+    #     )
+    #     if fname != "":
+    #         self.profile_field.setText(fname)
+    #         self.config.set_profile(
+    #             self.executable_selection.currentText(),
+    #             self.profile_field.text()
+    #         )
 
-        If a valid file is selected the mapping from executable to
-        profile is updated.
-        """
-        fname, _ = QtWidgets.QFileDialog.getOpenFileName(
-            None,
-            "Path to executable",
-            gremlin.util.userprofile_path(),
-            "Profile (*.xml)"
-        )
-        if fname != "":
-            self.profile_field.setText(fname)
-            self.config.set_profile(
-                self.executable_selection.currentText(),
-                self.profile_field.text()
-            )
+    # def _show_executable(self, exec_path):
+    #     """Displays the profile associated with the given executable.
 
-    def _show_executable(self, exec_path):
-        """Displays the profile associated with the given executable.
+    #     :param exec_path path to the executable to shop
+    #     """
+    #     self.profile_field.setText(self.config.get_profile(exec_path))
 
-        :param exec_path path to the executable to shop
-        """
-        self.profile_field.setText(self.config.get_profile(exec_path))
+    # def _show_mode_change_message(self, clicked):
+    #     """Stores the user's preference for mode change notifications.
 
-    def _show_mode_change_message(self, clicked):
-        """Stores the user's preference for mode change notifications.
+    #     :param clicked whether or not the checkbox is ticked"""
+    #     self.config.mode_change_message = clicked
+    #     self.config.save()
 
-        :param clicked whether or not the checkbox is ticked"""
-        self.config.mode_change_message = clicked
-        self.config.save()
-
-    def _update_profile(self):
-        """Updates the profile associated with the current executable."""
-        self.config.set_profile(
-            self.executable_selection.currentText(),
-            self.profile_field.text()
-        )
+    # def _update_profile(self):
+    #     """Updates the profile associated with the current executable."""
+    #     self.config.set_profile(
+    #         self.executable_selection.currentText(),
+    #         self.profile_field.text()
+    #     )
