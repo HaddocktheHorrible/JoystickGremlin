@@ -1640,10 +1640,7 @@ class Profile:
         # finding binding in list of all bound vjoys
         # we can do this because all drop-downs are already filtered for correct type
         # and binding list only allows one binding per vjoy output
-        all_bound_vjoys_in_mode = {}
-        for input_type in self._bound_vjoys:
-            all_bound_vjoys_in_mode.update(self._bound_vjoys[input_type])
-        bound_vjoy = all_bound_vjoys_in_mode[binding]
+        bound_vjoy = self.get_all_bound_vjoys()[binding]
         return {
                 "device_id": bound_vjoy.vjoy_id,
                 "input_id": bound_vjoy.input_id,
@@ -1657,6 +1654,14 @@ class Profile:
         :return all bindings for given input_type
         """    
         return self._bound_vjoys[input_type].keys()
+    
+    def get_all_bound_vjoys(self):
+        """Returns list of all BoundVJoys across all input types"""
+        
+        all_bound_vjoys = {}
+        for input_type in self._bound_vjoys:
+            all_bound_vjoys.update(self._bound_vjoys[input_type])
+        return all_bound_vjoys
     
     def get_binding_from_vjoy(self, device_guid, input_id, input_type):
         """Returns binding for given vjoy device and input, if any
