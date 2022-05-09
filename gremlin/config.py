@@ -552,3 +552,59 @@ class Configuration:
         """
         self._data["window_location"] = value
         self.save()
+
+    def get_exporter_list(self):
+        """Returns sorted set of user-defined exporter script paths
+        
+        :return list of custom exporters or None if no custom exporters exist
+        """
+        
+        exporters = self._data.get("custom_exporters", None)
+        if exporters is not None:
+            exporters = set(sorted(
+                exporters,
+                key=lambda x: x.lower()
+            ))
+            
+        return exporters
+    
+    def add_exporter(self, exporter_path):
+        """Add exporter to config list
+        
+        :param exporter_path the path to the custom exporter to add
+        """
+        
+        # create custom_exporter set if it doesn't exist
+        if self._data.get("custom_exporters", None) is None:
+            self._data["custom_exporters"] = {exporter_path}
+        else:
+            self._data["custom_exporters"].add(exporter_path)
+        self.save()
+            
+    def remove_exporter(self, exporter_path):
+        """Remove exporter from config list
+        
+        :param exporter_path the path of the custom exporter script to remove
+        """
+        
+        self._data["custom_exporters"].discard(exporter_path)
+        self.save()
+        
+    @property
+    def overwrite_exporter_template(self):
+        """Returns whether or not to overwrite template on export.
+        
+        :return True is template overwrite is active, False otherwise
+        """
+        return self._data.get("overwrite_exporter_template", False)
+    
+    @overwrite_exporter_template.setter
+    def overwrite_exporter_template(self, value):
+        """Sets whether or not to overwrite template on export.
+
+        :param value Flag indicating whether or not to enable / disable the
+            feature
+        """
+        if type(value) == bool:
+            self._data["overwrite_exporter_template"] = value
+            self.save()
