@@ -1203,7 +1203,7 @@ class BindingExportUi(common.BaseDialogUi):
     """UI allowing user to export current bindings to game-specific file."""
 
     def __init__(self, profile_data, parent=None):
-        """Creates a new options UI instance.
+        """Creates a new exporter UI instance.
 
         :param parent the parent of this widget
         """
@@ -1218,15 +1218,15 @@ class BindingExportUi(common.BaseDialogUi):
         self._create_ui()
 
     def _create_ui(self):
-        """Creates the profile options page."""
+        """Creates the binding exporter page."""
         self.main_layout = QtWidgets.QVBoxLayout(self)
 
         # edit in place option
-        self.export_in_place_checkbox = QtWidgets.QCheckBox(
-            "Edit template in place"
+        self.overwrite_checkbox = QtWidgets.QCheckBox(
+            "Overwrite exporter template on Export"
         )
-        self.export_in_place_checkbox.clicked.connect(self._export_in_place)
-        self.export_in_place_checkbox.setChecked(self.config.export_in_place)
+        self.overwrite_checkbox.clicked.connect(self._overwrite_template)
+        self.overwrite_checkbox.setChecked(self.config.overwrite_exporter_template)
 
         # exporter dropdown list
         self.exporter_layout = QtWidgets.QHBoxLayout()
@@ -1253,6 +1253,7 @@ class BindingExportUi(common.BaseDialogUi):
         self.exporter_layout.addWidget(self.exporter_edit)
         self.exporter_layout.addStretch()
 
+        # arguments text field
         self.args_layout = QtWidgets.QHBoxLayout()
         self.args_label = QtWidgets.QLabel("Arguments")
         self.args_field = QtWidgets.QLineEdit()
@@ -1266,7 +1267,7 @@ class BindingExportUi(common.BaseDialogUi):
         self.args_layout.addWidget(self.args_field)
         self.args_layout.addWidget(self.args_select)
 
-        self.main_layout.addWidget(self.export_in_place_checkbox)
+        self.main_layout.addWidget(self.overwrite_checkbox)
         self.main_layout.addLayout(self.exporter_layout)
         self.main_layout.addLayout(self.args_layout)
         self.main_layout.addStretch()
@@ -1329,7 +1330,22 @@ class BindingExportUi(common.BaseDialogUi):
         
         # todo: save output based on overwrite template or prompt for file
         return -1
-
+    
+    def _update_args(self, arg_string):
+        """Stores exporter argument string.
+        
+        :param arg_string POSIX-style command-line arg string
+        """
+        self._profile.settings.exporter_arg_string = arg_string
+        
+    def _overwrite_template(self, clicked):
+        """Stores config exporter template overwrite preference.
+        
+        :param clicked whether or not the checkbox is ticked
+        """
+        self.overwrite_checkbox.setEnabled(clicked)
+        self.config.overwrite_exporter_template = clicked
+        
     # def _list_executables(self):
     #     """Shows a list of executables for the user to pick."""
     #     self.executable_list_view = ProcessWindow()
