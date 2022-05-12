@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import logging
 import subprocess
 import sys
 import winreg
@@ -1257,19 +1258,30 @@ class BindingExportUi(common.BaseDialogUi):
         self.args_layout = QtWidgets.QHBoxLayout()
         self.args_label = QtWidgets.QLabel("Arguments")
         self.args_field = QtWidgets.QLineEdit()
-        self.args_field.textChanged.connect(self._update_args)
-        self.args_field.editingFinished.connect(self._update_args)
-        self.args_select = QtWidgets.QPushButton()
-        self.args_select.setIcon(QtGui.QIcon("gfx/button_edit.png"))
-        self.args_select.clicked.connect(self._append_filepath)
+        self.args_field.textEdited.connect(self._update_args)
+        self.args_field.setText(self._profile.settings.exporter_arg_string)
 
         self.args_layout.addWidget(self.args_label)
         self.args_layout.addWidget(self.args_field)
-        self.args_layout.addWidget(self.args_select)
+        
+        # exporter template text field
+        self.template_layout = QtWidgets.QHBoxLayout()
+        self.template_label = QtWidgets.QLabel("Config Template")
+        self.template_field = QtWidgets.QLineEdit()
+        self.template_field.textChanged.connect(self._update_template)
+        self.template_field.setText(self._profile.settings.exporter_template_path)
+        self.template_select = QtWidgets.QPushButton()
+        self.template_select.setIcon(QtGui.QIcon("gfx/button_edit.png"))
+        self.template_select.clicked.connect(self._select_template)
+
+        self.template_layout.addWidget(self.template_label)
+        self.template_layout.addWidget(self.template_field)
+        self.template_layout.addWidget(self.template_select)
 
         self.main_layout.addWidget(self.overwrite_checkbox)
         self.main_layout.addLayout(self.exporter_layout)
         self.main_layout.addLayout(self.args_layout)
+        self.main_layout.addLayout(self.template_layout)
         self.main_layout.addStretch()
         
         self.exporter_help = QtWidgets.QLabel(
@@ -1316,6 +1328,44 @@ class BindingExportUi(common.BaseDialogUi):
     #         index = self.executable_selection.findText(executable_name)
     #     self.executable_selection.setCurrentIndex(index)
         
+    def populate_exporters(self, exporter_path=""):
+        """Populates the exporter drop down menu.
+        
+        Menu begins with empty entry, then valid custom exporters in alphabetical order, 
+        then built-in exporters in alphabetical order.
+
+        :param exporter_path name of the exporter to pre select, if any
+        """
+        self.exporter_selection.clear()
+        self.exporter_selection.addItem("")
+        exporter_list = self.config.get_exporter_list()
+        for path in exporter_list:
+            if os.path.isfile(path):
+                self.exporter_selection.addItem(path)
+            else:
+                msg = "Could not find custom exporter '{}'. Removed from config.".format(path)
+                self.config.remove_exporter(path)
+                logging.getLogger("system").warning(msg)
+        for path in self._discover_exporters():
+            self.exporter_selection.addItem(path)
+
+        # Select the provided executable if it exists
+        # otherwise the first one in the list
+        index = max(0, self.exporter_selection.findText(exporter_path))
+        self.exporter_selection.setCurrentIndex(index)
+        
+    def _discover_exporters(self):
+        """Find builtin exporter scripts"""
+        
+        exporters_list = []
+        for root, dir, file in os.walk("exporter_plugins"):
+            exporters_list.append(os.path.join(root,file))
+            
+        return sorted(
+            exporters_list,
+            key=lambda x: x.lower()
+            )
+
     def _run_exporter(self):
         """Execute selected exporter with optional args"""
         
@@ -1345,6 +1395,27 @@ class BindingExportUi(common.BaseDialogUi):
         """
         self.overwrite_checkbox.setEnabled(clicked)
         self.config.overwrite_exporter_template = clicked
+        
+    def _select_template(self):
+        """Displays file selection dialog for an exporter template file.
+        
+        If a valid file is selected, the template path is saved to profile.
+        """
+        fname, _ = QtWidgets.QFileDialog.getOpenFileName(
+            None,
+            "Path to program config template",
+            gremlin.util.userprofile_path(),
+            "CLoD Config (*.ini);;XPlane 11 Profile (*.prf);;All files (*.*)"
+        )
+        if fname != "":
+            self.template_field.setText(fname)
+            # note save to profile handled by _update_template on text change
+            
+    def _update_template(self):
+        """Updates the exporter template path"""
+        new_path = self.template_field.currentText()
+        self.profile.settings.exporter_template_path = new_path
+        # todo: add callback to export box to check is valid config
         
     # def _list_executables(self):
     #     """Shows a list of executables for the user to pick."""
