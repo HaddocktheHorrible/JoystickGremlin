@@ -1201,9 +1201,9 @@ class Settings:
         self.vjoy_initial_values = {}
         self.startup_mode = None
         self.default_delay = 0.05
-        self.exporter_path = []
-        self.exporter_arg_string = []
-        self.exporter_template_path = []
+        self.exporter_path = ""
+        self.exporter_arg_string = ""
+        self.exporter_template_path = ""
 
     def to_xml(self):
         """Returns an XML node containing the settings.
@@ -1285,9 +1285,9 @@ class Settings:
                 self.vjoy_initial_values[vid][aid] = value
             
         # Exporter settings
-        self.exporter_path = []
-        self.exporter_arg_string = []
-        self.exporter_template_path = []
+        self.exporter_path = ""
+        self.exporter_arg_string = ""
+        self.exporter_template_path = ""
         for exporter_node in node.findall("exporter"):
             self.exporter_path = safe_read(exporter_node, "script-path")
             self.exporter_arg_string = safe_read(exporter_node, "args")
