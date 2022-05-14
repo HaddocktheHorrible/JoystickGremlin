@@ -1215,11 +1215,11 @@ class BindingExportUi(common.BaseDialogUi):
         self._profile = profile_data
         self.setMinimumWidth(400)
         self.setWindowTitle("Binding Export")
-        
+
         # exporter settings
         self._exporter_spec = None
         self._exporter_module = None
-        
+
         # todo: set current exporter selection from profile
         # set through self.populate_exporter(self._profile.settings.exporter_path)
 
@@ -1246,7 +1246,7 @@ class BindingExportUi(common.BaseDialogUi):
         )
         self.exporter_add = QtWidgets.QPushButton()
         self.exporter_add.setIcon(QtGui.QIcon("gfx/button_add.png"))
-        self.exporter_add.clicked.connect(self._add_exporter)
+        self.exporter_add.clicked.connect(self._new_exporter)
         self.exporter_remove = QtWidgets.QPushButton()
         self.exporter_remove.setIcon(QtGui.QIcon("gfx/button_delete.png"))
         self.exporter_remove.clicked.connect(self._remove_exporter)
@@ -1270,7 +1270,7 @@ class BindingExportUi(common.BaseDialogUi):
 
         self.args_layout.addWidget(self.args_label)
         self.args_layout.addWidget(self.args_field)
-        
+
         # exporter template text field
         self.template_layout = QtWidgets.QHBoxLayout()
         self.template_label = QtWidgets.QLabel("Config Template")
@@ -1290,19 +1290,19 @@ class BindingExportUi(common.BaseDialogUi):
         self.main_layout.addLayout(self.args_layout)
         self.main_layout.addLayout(self.template_layout)
         self.main_layout.addStretch()
-        
+
         self.exporter_help = QtWidgets.QLabel("")
         self.exporter_help.setStyleSheet("QLabel { background-color : '#FFF4B0'; }")
         self.exporter_help.setWordWrap(True)
         self.exporter_help.setFrameShape(QtWidgets.QFrame.Box)
         self.exporter_help.setMargin(10)
         self.main_layout.addWidget(self.exporter_help)
-        
+
         self.export_button = QtWidgets.QPushButton("Export")
         self.export_button.clicked.connect(self.run_exporter)
         self.main_layout.addWidget(self.export_button)
-        
-        # create exporter selection with exporter profile pre-selected 
+
+        # create exporter selection with exporter profile pre-selected
         self.populate_exporters(self._profile.settings.exporter_path)
 
     def closeEvent(self, event):
@@ -1311,30 +1311,11 @@ class BindingExportUi(common.BaseDialogUi):
         :param event the close event
         """
         super().closeEvent(event)
-        
-    # def populate_executables(self, executable_name=None):
-    #     """Populates the profile drop down menu.
 
-    #     :param executable_name name of the executable to pre select
-    #     """
-    #     self.profile_field.textChanged.disconnect(self._update_profile)
-    #     self.executable_selection.clear()
-    #     executable_list = self.config.get_executable_list()
-    #     for path in executable_list:
-    #         self.executable_selection.addItem(path)
-    #     self.profile_field.textChanged.connect(self._update_profile)
-
-    #     # Select the provided executable if it exists, otherwise the first one
-    #     # in the list
-    #     index = 0
-    #     if executable_name is not None and executable_name in executable_list:
-    #         index = self.executable_selection.findText(executable_name)
-    #     self.executable_selection.setCurrentIndex(index)
-        
     def populate_exporters(self, exporter_path=""):
         """Populates the exporter drop down menu.
-        
-        Menu begins with empty entry, then valid custom exporters in alphabetical order, 
+
+        Menu begins with empty entry, then valid custom exporters in alphabetical order,
         then built-in exporters in alphabetical order.
 
         :param exporter_path name of the exporter to pre select, if any
@@ -1356,24 +1337,24 @@ class BindingExportUi(common.BaseDialogUi):
         # otherwise the first one in the list
         index = max(0, self.exporter_selection.findText(exporter_path))
         self.exporter_selection.setCurrentIndex(index)
-        
+
     def _discover_exporters(self):
         """Find builtin exporter scripts"""
-        
+
         exporters_list = []
         for root, dir, file in os.walk("exporter_plugins"):
             exporters_list.append(os.path.join(root,file))
-            
+
         return sorted(
             exporters_list,
             key=lambda x: x.lower()
             )
-        
+
     def _select_exporter(self, exporter):
         """React to exporter selection by user"""
-        
+
         self._profile.settings.exporter_path = exporter
-        
+
         # load module from path, if any
         if exporter:
             self._exporter_spec = importlib.util.spec_from_file_location("exporter_module",exporter)
@@ -1381,13 +1362,65 @@ class BindingExportUi(common.BaseDialogUi):
         else:
             self._exporter_spec = None
             self._exporter_module = None
-            
+
         self._show_help(self._exporter_module)
         # todo: react remove/edit/export buttons
-        
+
+    def _add_exporter(self, fname):
+        """Adds the provided exporter to the list of configurations.
+
+        :param fname the exporter script path
+        """
+        if fname not in self.config.get_exporter_list():
+            self.config.add_exporter(fname)
+            self.populate_exporters(fname)
+        else:
+            self.exporter_selection.setCurrentIndex(
+                self.exporter_selection.findText(fname)
+            )
+
+    def _edit_exporter(self):
+        """Allows editing the path of an exporter."""
+        new_text, flag = QtWidgets.QInputDialog.getText(
+            self,
+            "Change exporter",
+            "Change the exporter path entry.",
+            QtWidgets.QLineEdit.Normal,
+            self.exporter_selection.currentText()
+        )
+
+        # if the user did click on ok and entry is valid
+        # try to remove existing entry, add new entry
+        if flag:
+            if not os.path.isfile(new_text):
+                logging.getLogger("system").warning("Could not find exporter at {}! Ignoring".format(new_text))
+            elif os.path.splitext(new_text)[1] == ".py":
+                logging.getLogger("system").warning("Exporter at {} is not a valid python file! Ignoring".format(new_text))
+            else:
+                self.config.remove_exporter(self.exporter_selection.currentText())
+                self._add_exporter(new_text)
+
+    def _new_exporter(self):
+        """Prompts the user to select a new exporter to add to the
+        profile.
+        """
+        fname, _ = QtWidgets.QFileDialog.getOpenFileName(
+            None,
+            "Path to exporter",
+            gremlin.util.userprofile_path(),
+            "exporter script (*.py)"
+        )
+        if fname != "":
+            self._add_exporter(fname)
+
+    def _remove_exporter(self):
+        """Removes the current executable from the configuration."""
+        self.config.remove_exporter(self.exporter_selection.currentText())
+        self.populate_executables()
+
     def _show_help(self, module):
         """Show selected exporter help"""
-        
+
         if module is not None:
             self.exporter_help.setText(help(module))
         else:
@@ -1400,37 +1433,37 @@ class BindingExportUi(common.BaseDialogUi):
 
     def _run_exporter(self):
         """Execute selected exporter with optional args"""
-        
+
         # re-load exporter to ensure exporter has not been edited between selections
         # fixme: is there a better way to do this?
         self._select_exporter()
-        
+
         # run the exporter
         # todo: wrap in try-catch... check export is implemented and valid
         self._exporter_spec.loader.exec_module(self._exporter_module)
         # self._exporter_module.export(self._profile.get_all_bound_vjoys(),self.exporter_template)
-        
+
         # todo: save output based on overwrite template or prompt for file
         return -1
-    
+
     def _update_args(self, arg_string):
         """Stores exporter argument string.
-        
+
         :param arg_string POSIX-style command-line arg string
         """
         self._profile.settings.exporter_arg_string = arg_string
-        
+
     def _overwrite_template(self, clicked):
         """Stores config exporter template overwrite preference.
-        
+
         :param clicked whether or not the checkbox is ticked
         """
         self.overwrite_checkbox.setEnabled(clicked)
         self.config.overwrite_exporter_template = clicked
-        
+
     def _select_template(self):
         """Displays file selection dialog for an exporter template file.
-        
+
         If a valid file is selected, the template path is saved to profile.
         """
         fname, _ = QtWidgets.QFileDialog.getOpenFileName(
@@ -1442,109 +1475,9 @@ class BindingExportUi(common.BaseDialogUi):
         if fname != "":
             self.template_field.setText(fname)
             # note save to profile handled by _update_template on text change
-            
+
     def _update_template(self):
         """Updates the exporter template path"""
         new_path = self.template_field.currentText()
         self.profile.settings.exporter_template_path = new_path
         # todo: add callback to export box to check is valid config
-        
-    # def _list_executables(self):
-    #     """Shows a list of executables for the user to pick."""
-    #     self.executable_list_view = ProcessWindow()
-    #     self.executable_list_view.process_selected.connect(self._add_executable)
-    #     self.executable_list_view.show()
-
-    # def _add_executable(self, fname):
-    #     """Adds the provided executable to the list of configurations.
-
-    #     :param fname the executable for which to add a mapping
-    #     """
-    #     if fname not in self.config.get_executable_list():
-    #         self.config.set_profile(fname, "")
-    #         self.populate_executables(fname)
-    #     else:
-    #         self.executable_selection.setCurrentIndex(
-    #             self.executable_selection.findText(fname)
-    #         )
-
-    # def _edit_executable(self):
-    #     """Allows editing the path of an executable."""
-    #     new_text, flag = QtWidgets.QInputDialog.getText(
-    #         self,
-    #         "Change Executable / RegExp",
-    #         "Change the executable text or enter a regular expression to use.",
-    #         QtWidgets.QLineEdit.Normal,
-    #         self.executable_selection.currentText()
-    #     )
-
-    #     # If the user did click on ok update the entry
-    #     old_entry = self.executable_selection.currentText()
-    #     if flag:
-    #         if old_entry not in self.config.get_executable_list():
-    #             self._add_executable(new_text)
-    #         else:
-    #             self.config.set_profile(
-    #                 new_text,
-    #                 self.config.get_profile(old_entry)
-    #             )
-    #             self.config.remove_profile(old_entry)
-    #             self.populate_executables(new_text)
-
-    # def _new_executable(self):
-    #     """Prompts the user to select a new executable to add to the
-    #     profile.
-    #     """
-    #     fname, _ = QtWidgets.QFileDialog.getOpenFileName(
-    #         None,
-    #         "Path to executable",
-    #         "C:\\",
-    #         "Executable (*.exe)"
-    #     )
-    #     if fname != "":
-    #         self._add_executable(fname)
-
-    # def _remove_executable(self):
-    #     """Removes the current executable from the configuration."""
-    #     self.config.remove_profile(self.executable_selection.currentText())
-    #     self.populate_executables()
-
-    # def _select_profile(self):
-    #     """Displays a file selection dialog for a profile.
-
-    #     If a valid file is selected the mapping from executable to
-    #     profile is updated.
-    #     """
-    #     fname, _ = QtWidgets.QFileDialog.getOpenFileName(
-    #         None,
-    #         "Path to executable",
-    #         gremlin.util.userprofile_path(),
-    #         "Profile (*.xml)"
-    #     )
-    #     if fname != "":
-    #         self.profile_field.setText(fname)
-    #         self.config.set_profile(
-    #             self.executable_selection.currentText(),
-    #             self.profile_field.text()
-    #         )
-
-    # def _show_executable(self, exec_path):
-    #     """Displays the profile associated with the given executable.
-
-    #     :param exec_path path to the executable to shop
-    #     """
-    #     self.profile_field.setText(self.config.get_profile(exec_path))
-
-    # def _show_mode_change_message(self, clicked):
-    #     """Stores the user's preference for mode change notifications.
-
-    #     :param clicked whether or not the checkbox is ticked"""
-    #     self.config.mode_change_message = clicked
-    #     self.config.save()
-
-    # def _update_profile(self):
-    #     """Updates the profile associated with the current executable."""
-    #     self.config.set_profile(
-    #         self.executable_selection.currentText(),
-    #         self.profile_field.text()
-    #     )
