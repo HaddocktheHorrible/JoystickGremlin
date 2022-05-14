@@ -1215,6 +1215,13 @@ class BindingExportUi(common.BaseDialogUi):
         self._profile = profile_data
         self.setMinimumWidth(400)
         self.setWindowTitle("Binding Export")
+        
+        # exporter settings
+        self._exporter_spec = None
+        self._exporter_module = None
+        
+        # todo: set current exporter selection from profile
+        # set through self.populate_exporter(self._profile.settings.exporter_path)
 
         self._create_ui()
 
@@ -1239,7 +1246,7 @@ class BindingExportUi(common.BaseDialogUi):
         )
         self.exporter_add = QtWidgets.QPushButton()
         self.exporter_add.setIcon(QtGui.QIcon("gfx/button_add.png"))
-        self.exporter_add.clicked.connect(self._new_exporter)
+        self.exporter_add.clicked.connect(self._add_exporter)
         self.exporter_remove = QtWidgets.QPushButton()
         self.exporter_remove.setIcon(QtGui.QIcon("gfx/button_delete.png"))
         self.exporter_remove.clicked.connect(self._remove_exporter)
@@ -1284,12 +1291,7 @@ class BindingExportUi(common.BaseDialogUi):
         self.main_layout.addLayout(self.template_layout)
         self.main_layout.addStretch()
         
-        self.exporter_help = QtWidgets.QLabel(
-            "Exporters print VJoy bindings to a game-specific configuration file. "
-            "Optional arguments may be passed to the exporter function above. "
-            "Help for the selected exporter is listed in this dialog once an "
-            "exporter is selected."
-        )
+        self.exporter_help = QtWidgets.QLabel("")
         self.exporter_help.setStyleSheet("QLabel { background-color : '#FFF4B0'; }")
         self.exporter_help.setWordWrap(True)
         self.exporter_help.setFrameShape(QtWidgets.QFrame.Box)
@@ -1300,7 +1302,8 @@ class BindingExportUi(common.BaseDialogUi):
         self.export_button.clicked.connect(self.run_exporter)
         self.main_layout.addWidget(self.export_button)
         
-        self.populate_exporters()
+        # create exporter selection with exporter profile pre-selected 
+        self.populate_exporters(self._profile.settings.exporter_path)
 
     def closeEvent(self, event):
         """Closes the calibration window.
@@ -1365,18 +1368,47 @@ class BindingExportUi(common.BaseDialogUi):
             exporters_list,
             key=lambda x: x.lower()
             )
+        
+    def _select_exporter(self, exporter):
+        """React to exporter selection by user"""
+        
+        self._profile.settings.exporter_path = exporter
+        
+        # load module from path, if any
+        if exporter:
+            self._exporter_spec = importlib.util.spec_from_file_location("exporter_module",exporter)
+            self._exporter_module = importlib.util.module_from_spec(self._exporter_spec)
+        else:
+            self._exporter_spec = None
+            self._exporter_module = None
+            
+        self._show_help(self._exporter_module)
+        # todo: react remove/edit/export buttons
+        
+    def _show_help(self, module):
+        """Show selected exporter help"""
+        
+        if module is not None:
+            self.exporter_help.setText(help(module))
+        else:
+            self.exporter_help.setTest(
+                "Exporters print VJoy bindings to a game-specific configuration file. "
+                "Optional arguments may be passed to the exporter function above. "
+                "Help for the selected exporter is listed in this dialog once an "
+                "exporter is selected."
+                )
 
     def _run_exporter(self):
         """Execute selected exporter with optional args"""
         
-        # prep chosen exporter to run
-        spec = importlib.util.spec_from_file_location("exporter_module",self.exporter_path)
-        exporter = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(exporter)
+        # re-load exporter to ensure exporter has not been edited between selections
+        # fixme: is there a better way to do this?
+        self._select_exporter()
         
         # run the exporter
         # todo: wrap in try-catch... check export is implemented and valid
-        exporter.export(self._profile.get_all_bound_vjoys(),self.exporter_template)
+        self._exporter_spec.loader.exec_module(self._exporter_module)
+        # self._exporter_module.export(self._profile.get_all_bound_vjoys(),self.exporter_template)
         
         # todo: save output based on overwrite template or prompt for file
         return -1
