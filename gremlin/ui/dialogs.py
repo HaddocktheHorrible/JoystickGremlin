@@ -1218,7 +1218,6 @@ class BindingExportUi(common.BaseDialogUi):
 
         # exporter settings
         self._exporter_spec = None
-        self._exporter_module = None
 
         # todo: set current exporter selection from profile
         # set through self.populate_exporter(self._profile.settings.exporter_path)
@@ -1358,15 +1357,13 @@ class BindingExportUi(common.BaseDialogUi):
 
         self._profile.settings.exporter_path = exporter
 
-        # load module from path, if any
+        # load module spec from path, if any
         if exporter:
             self._exporter_spec = importlib.util.spec_from_file_location("exporter_module",exporter)
-            self._exporter_module = importlib.util.module_from_spec(self._exporter_spec)
         else:
             self._exporter_spec = None
-            self._exporter_module = None
 
-        self._show_help(self._exporter_module)
+        self._show_help(importlib.util.module_from_spec(self._exporter_spec))
         self._update_button_status()
 
     def _add_exporter(self, fname):
@@ -1446,7 +1443,7 @@ class BindingExportUi(common.BaseDialogUi):
             self.exporter_remove.setEnabled(False)
             
         # enable export button if a valid exporter and template are selected
-        if self._exporter_module is None:
+        if self._exporter_spec is None:
             self.export_button.setEnabled(False)
             self.export_button.setToolTip("Select an exporter and template file first!")
         elif not os.path.isfile(self.template_field.text()):
@@ -1459,13 +1456,13 @@ class BindingExportUi(common.BaseDialogUi):
     def _run_exporter(self):
         """Execute selected exporter with optional args"""
 
-        # re-load exporter to ensure exporter has not been edited between selections
-        # todo: is there a better way to do this?
-        self._select_exporter()
+        # reload module now, in case user has changed module since initial selection
+        exporter_module = importlib.util.module_from_spec(self._exporter_spec)
+        self._show_help(exporter_module)
 
         # run the exporter
         # todo: wrap in try-catch... check export is implemented and valid
-        self._exporter_spec.loader.exec_module(self._exporter_module)
+        self._exporter_spec.loader.exec_module(exporter_module)
         # self._exporter_module.export(self._profile.get_all_bound_vjoys(),self.exporter_template)
 
         # todo: save output based on overwrite template or prompt for file
@@ -1494,9 +1491,10 @@ class BindingExportUi(common.BaseDialogUi):
         
         # build file filter from selected exporter, if any
         file_filter = "All Files (*.*)"
-        if self._exporter_module is not None:
+        if self._exporter_spec is not None:
             try:
-                file_filter = "{};;{}".format(self._exporter_module.template_filter, file_filter)
+                module = importlib.util.module_from_spec(self._exporter_spec)
+                file_filter = "{};;{}".format(module.template_filter, file_filter)
             except:
                 msg = "Expected var 'template_filter' not defined in {}!".format(self._exporter_spec.origin)
                 logging.getLogger("system").warning(msg)
