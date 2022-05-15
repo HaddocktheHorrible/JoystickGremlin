@@ -5,6 +5,7 @@ from gremlin.common import InputType
 import gremlin.error
 import logging
 
+template_filter = "CLoD Config (*.ini)"
 ignore_pattern = ["[", ";"]
 ignore_binding = ["#"]
 vjoy_map = {
