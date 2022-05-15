@@ -1241,17 +1241,18 @@ class BindingExportUi(common.BaseDialogUi):
         self.exporter_label = QtWidgets.QLabel("Exporter")
         self.exporter_selection = QtWidgets.QComboBox()
         self.exporter_selection.setMinimumWidth(300)
-        self.exporter_selection.currentTextChanged.connect(
-            self._select_exporter
-        )
+        self.exporter_selection.currentTextChanged.connect(self._select_exporter)
         self.exporter_add = QtWidgets.QPushButton()
         self.exporter_add.setIcon(QtGui.QIcon("gfx/button_add.png"))
+        self.exporter_add.setToolTip("Add custom exporter script to config.")
         self.exporter_add.clicked.connect(self._new_exporter)
         self.exporter_remove = QtWidgets.QPushButton()
         self.exporter_remove.setIcon(QtGui.QIcon("gfx/button_delete.png"))
+        self.exporter_add.setToolTip("Remove custom exporter script from config.")
         self.exporter_remove.clicked.connect(self._remove_exporter)
         self.exporter_edit = QtWidgets.QPushButton()
         self.exporter_edit.setIcon(QtGui.QIcon("gfx/button_edit.png"))
+        self.exporter_add.setToolTip("Edit saved exporter script path.")
         self.exporter_edit.clicked.connect(self._edit_exporter)
 
         self.exporter_layout.addWidget(self.exporter_label)
@@ -1265,6 +1266,7 @@ class BindingExportUi(common.BaseDialogUi):
         self.args_layout = QtWidgets.QHBoxLayout()
         self.args_label = QtWidgets.QLabel("Arguments")
         self.args_field = QtWidgets.QLineEdit()
+        self.args_field.setToolTip("POSIX-style arguments to pass to selected exporter.")
         self.args_field.textEdited.connect(self._update_args)
         self.args_field.setText(self._profile.settings.exporter_arg_string)
 
@@ -1275,6 +1277,7 @@ class BindingExportUi(common.BaseDialogUi):
         self.template_layout = QtWidgets.QHBoxLayout()
         self.template_label = QtWidgets.QLabel("Config Template")
         self.template_field = QtWidgets.QLineEdit()
+        self.template_field.setToolTip("Output file template to use.")
         self.template_field.textChanged.connect(self._update_template)
         self.template_field.setText(self._profile.settings.exporter_template_path)
         self.template_select = QtWidgets.QPushButton()
@@ -1364,7 +1367,7 @@ class BindingExportUi(common.BaseDialogUi):
             self._exporter_module = None
 
         self._show_help(self._exporter_module)
-        # todo: react remove/edit/export buttons
+        self._update_button_status()
 
     def _add_exporter(self, fname):
         """Adds the provided exporter to the list of configurations.
@@ -1430,12 +1433,34 @@ class BindingExportUi(common.BaseDialogUi):
                 "Help for the selected exporter is listed in this dialog once an "
                 "exporter is selected."
                 )
+            
+    def _update_button_status(self):
+        """Enable/disable buttons based on current exporter selection"""
+        
+        # enable edit/remove for custom exporters only
+        if self.exporter_selection.currentText() in self.config.get_exporter_list():
+            self.exporter_edit.setEnabled(True)
+            self.exporter_remove.setEnabled(True)
+        else:
+            self.exporter_edit.setEnabled(False)
+            self.exporter_remove.setEnabled(False)
+            
+        # enable export button if a valid exporter and template are selected
+        if self._exporter_module is None:
+            self.export_button.setEnabled(False)
+            self.export_button.setToolTip("Select an exporter and template file first!")
+        elif not os.path.isfile(self.template_field.text()):
+            self.export_button.setEnabled(False)
+            self.export_button.setToolTip("Template file not found!")
+        else:
+            self.export_button.setEnabled(True)
+            self.export_button.setToolTip("Export current bindings using selected exporter.")
 
     def _run_exporter(self):
         """Execute selected exporter with optional args"""
 
         # re-load exporter to ensure exporter has not been edited between selections
-        # fixme: is there a better way to do this?
+        # todo: is there a better way to do this?
         self._select_exporter()
 
         # run the exporter
@@ -1466,6 +1491,16 @@ class BindingExportUi(common.BaseDialogUi):
 
         If a valid file is selected, the template path is saved to profile.
         """
+        
+        # build file filter from selected exporter, if any
+        file_filter = "All Files (*.*)"
+        if self._exporter_module is not None:
+            try:
+                file_filter = "{};;{}".format(self._exporter_module.template_filter, file_filter)
+            except:
+                msg = "Expected var 'template_filter' not defined in {}!".format(self._exporter_spec.origin)
+                logging.getLogger("system").warning(msg)
+                
         fname, _ = QtWidgets.QFileDialog.getOpenFileName(
             None,
             "Path to program config template",
@@ -1476,8 +1511,7 @@ class BindingExportUi(common.BaseDialogUi):
             self.template_field.setText(fname)
             # note save to profile handled by _update_template on text change
 
-    def _update_template(self):
+    def _update_template(self, new_path):
         """Updates the exporter template path"""
-        new_path = self.template_field.currentText()
         self.profile.settings.exporter_template_path = new_path
-        # todo: add callback to export box to check is valid config
+        self._update_button_status()
