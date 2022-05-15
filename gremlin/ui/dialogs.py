@@ -1427,7 +1427,7 @@ class BindingExportUi(common.BaseDialogUi):
         if module is not None:
             self.exporter_help.setText(help(module))
         else:
-            self.exporter_help.setTest(
+            self.exporter_help.setText(
                 "Exporters print VJoy bindings to a game-specific configuration file. "
                 "Optional arguments may be passed to the exporter function above. "
                 "Help for the selected exporter is listed in this dialog once an "
@@ -1501,11 +1501,12 @@ class BindingExportUi(common.BaseDialogUi):
                 msg = "Expected var 'template_filter' not defined in {}!".format(self._exporter_spec.origin)
                 logging.getLogger("system").warning(msg)
                 
+        # load dialog with file filter
         fname, _ = QtWidgets.QFileDialog.getOpenFileName(
             None,
-            "Path to program config template",
+            "Path to output config template",
             gremlin.util.userprofile_path(),
-            "CLoD Config (*.ini);;XPlane 11 Profile (*.prf);;All files (*.*)"
+            file_filter
         )
         if fname != "":
             self.template_field.setText(fname)
