@@ -1297,7 +1297,7 @@ class BindingExportUi(common.BaseDialogUi):
         self.main_layout.addWidget(self.exporter_help)
 
         self.export_button = QtWidgets.QPushButton("Export")
-        self.export_button.clicked.connect(self.run_exporter)
+        self.export_button.clicked.connect(self._run_exporter)
         self.main_layout.addWidget(self.export_button)
 
         # create exporter selection with exporter profile pre-selected
