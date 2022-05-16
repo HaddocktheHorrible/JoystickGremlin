@@ -1356,10 +1356,11 @@ class BindingExportUi(common.BaseDialogUi):
         # load module spec from path, if any
         if exporter:
             self._exporter_spec = importlib.util.spec_from_file_location("exporter_module",exporter)
+            self._show_help(importlib.util.module_from_spec(self._exporter_spec))
         else:
             self._exporter_spec = None
+            self._show_help(None)
 
-        self._show_help(importlib.util.module_from_spec(self._exporter_spec))
         self._update_button_status()
 
     def _add_exporter(self, fname):
