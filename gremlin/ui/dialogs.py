@@ -1460,13 +1460,43 @@ class BindingExportUi(common.BaseDialogUi):
         exporter_module = importlib.util.module_from_spec(self._exporter_spec)
         self._show_help(exporter_module)
 
-        # run the exporter
-        # todo: wrap in try-catch... check export is implemented and valid
-        self._exporter_spec.loader.exec_module(exporter_module)
-        # self._exporter_module.export(self._profile.get_all_bound_vjoys(),self.exporter_template)
+        # try to run the exporter
+        template_path = self.profile.exporter_template_path
+        try:
+            self._exporter_spec.loader.exec_module(exporter_module)
+            outfile = self.exporter_module.main(self._profile.get_all_bound_vjoys(),
+                                                template_path,
+                                                self._profile._exporter_args
+                                                )
+        except Exception as e:
+            # todo: better error handling for common exceptions - if main is missing, etc.
+            error_display = QtWidgets.QMessageBox(
+                QtWidgets.QMessageBox.Critical,
+                "Error",
+                e.value,
+                QtWidgets.QMessageBox.Ok
+            )
+            error_display.show()
+            return -1  
 
-        # todo: save output based on overwrite template or prompt for file
-        return -1
+        # write to template in-place or prompt for new file
+        if self.config.overwrite_exporter_template():
+            fname = template_path
+        else:
+            fname, _ = QtWidgets.QFileDialog.getSaveFileName(
+                None,
+                "Path to output config template",
+                template_path,
+                "All Files (*.*)"
+        ) 
+        #todo: apply same file filter from template for save prompt
+        #todo: check template_path is OK to pass to saveFileName
+            
+        # write to file
+        if fname != "":
+            fid = open(fname, "w")
+            fid.write(outfile)
+            fid.close()
 
     def _update_args(self, arg_string):
         """Stores exporter argument string.
