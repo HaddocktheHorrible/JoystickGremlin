@@ -1344,7 +1344,8 @@ class BindingExportUi(common.BaseDialogUi):
         exporters_list = []
         for root, dirs, files in os.walk("exporter_plugins"):
             for file in files:
-                exporters_list.append(os.path.join(root,file))
+                if os.path.splitext(file)[1] == ".py":
+                    exporters_list.append(os.path.join(root,file))
 
         return sorted(
             exporters_list,
