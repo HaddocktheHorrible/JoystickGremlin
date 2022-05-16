@@ -1216,12 +1216,8 @@ class BindingExportUi(common.BaseDialogUi):
         self.setMinimumWidth(400)
         self.setWindowTitle("Binding Export")
 
-        # exporter settings
+        # create exporter dialog
         self._exporter_spec = None
-
-        # todo: set current exporter selection from profile
-        # set through self.populate_exporter(self._profile.settings.exporter_path)
-
         self._create_ui()
 
     def _create_ui(self):
