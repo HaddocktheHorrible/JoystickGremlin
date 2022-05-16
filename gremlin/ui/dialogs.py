@@ -15,12 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from operator import mod
 import os
 import logging
 import subprocess
 import sys
 import winreg
 import importlib
+from inspect import getdoc
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -1420,7 +1422,7 @@ class BindingExportUi(common.BaseDialogUi):
         """Show selected exporter help"""
 
         if module is not None:
-            self.exporter_help.setText(help(module))
+            self.exporter_help.setText(getdoc(module))
         else:
             self.exporter_help.setText(
                 "Exporters print VJoy bindings to a game-specific configuration file. "
