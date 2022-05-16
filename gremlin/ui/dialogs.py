@@ -1564,5 +1564,5 @@ class BindingExportUi(common.BaseDialogUi):
 
     def _update_template(self, new_path):
         """Updates the exporter template path"""
-        self.profile.settings.exporter_template_path = new_path
+        self._profile.settings.exporter_template_path = new_path
         self._update_button_status()
