@@ -1406,9 +1406,9 @@ class BindingExportUi(common.BaseDialogUi):
         """
         fname, _ = QtWidgets.QFileDialog.getOpenFileName(
             None,
-            "Path to exporter",
+            "Path to Exporter",
             gremlin.util.userprofile_path(),
-            "exporter script (*.py)"
+            "Exporter Script (*.py)"
         )
         if fname != "":
             self._add_exporter(fname)
@@ -1485,7 +1485,7 @@ class BindingExportUi(common.BaseDialogUi):
         else:
             fname, _ = QtWidgets.QFileDialog.getSaveFileName(
                 None,
-                "Path to output config template",
+                "Save As",
                 template_path,
                 self._template_filter
         ) 
@@ -1531,7 +1531,7 @@ class BindingExportUi(common.BaseDialogUi):
         # load dialog with file filter
         fname, _ = QtWidgets.QFileDialog.getOpenFileName(
             None,
-            "Path to output config template",
+            "Select Export Template",
             gremlin.util.userprofile_path(),
             self._template_filter
         )
