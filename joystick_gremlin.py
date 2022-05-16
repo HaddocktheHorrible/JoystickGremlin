@@ -293,6 +293,14 @@ class GremlinUi(QtWidgets.QMainWindow):
         self.modal_windows["swap_devices"].closed.connect(
             self._create_tabs
         )
+        
+    def export_bindings_dialog(self):
+        """Opens the export bindings display window."""
+        self.modal_windows["export_bindings"] = gremlin.ui.dialogs.BindingExportUi(self._profile)
+        self.modal_windows["export_bindings"].show()
+        self.modal_windows["export_bindings"].closed.connect(
+            lambda: self._remove_modal_window("export_bindings")
+        )
 
     def _remove_modal_window(self, name):
         """Removes the modal window widget from the system.
@@ -526,6 +534,9 @@ class GremlinUi(QtWidgets.QMainWindow):
         self.ui.actionLogDisplay.triggered.connect(
             self.log_window
         )
+        self.ui.actionExportBindings.triggered.connect(
+            self.export_bindings_dialog
+        )
         # About
         self.ui.actionAbout.triggered.connect(self.about)
 
@@ -733,6 +744,9 @@ class GremlinUi(QtWidgets.QMainWindow):
         )
         self.ui.actionAbout.setIcon(
             QtGui.QIcon("gfx/about.svg")
+        )
+        self.ui.actionExportBindings.setIcon(
+            QtGui.QIcon("gfx/hat_ne.png")
         )
 
         # Toolbar actions
