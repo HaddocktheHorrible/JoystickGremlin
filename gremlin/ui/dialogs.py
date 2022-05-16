@@ -1472,7 +1472,7 @@ class BindingExportUi(common.BaseDialogUi):
             # todo: better error handling for common exceptions - if main is missing, etc.
             error_display = QtWidgets.QMessageBox(
                 QtWidgets.QMessageBox.Critical,
-                "Error",
+                "Could not execute exporter!",
                 e.value,
                 QtWidgets.QMessageBox.Ok
             )
@@ -1490,11 +1490,22 @@ class BindingExportUi(common.BaseDialogUi):
                 self._template_filter
         ) 
             
-        # write to file
-        if fname != "":
-            fid = open(fname, "w")
-            fid.write(outfile)
-            fid.close()
+        # try to write to file
+        try:
+            if fname != "":
+                fid = open(fname, "w")
+                fid.write(outfile)
+                fid.close()
+        except Exception as e:
+            error_display = QtWidgets.QMessageBox(
+                QtWidgets.QMessageBox.Critical,
+                "Could not write to file!",
+                e.value,
+                QtWidgets.QMessageBox.Ok
+            )
+            error_display.show()
+            return -1
+        return 0
 
     def _update_args(self, arg_string):
         """Stores exporter argument string.
