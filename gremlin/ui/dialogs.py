@@ -1487,10 +1487,8 @@ class BindingExportUi(common.BaseDialogUi):
                 None,
                 "Path to output config template",
                 template_path,
-                "All Files (*.*)"
+                self._template_filter
         ) 
-        #todo: apply same file filter from template for save prompt
-        #todo: check template_path is OK to pass to saveFileName
             
         # write to file
         if fname != "":
@@ -1518,8 +1516,33 @@ class BindingExportUi(common.BaseDialogUi):
 
         If a valid file is selected, the template path is saved to profile.
         """
+
+        # load dialog with file filter
+        fname, _ = QtWidgets.QFileDialog.getOpenFileName(
+            None,
+            "Path to output config template",
+            gremlin.util.userprofile_path(),
+            self._template_filter
+        )
+        if fname != "":
+            self.template_field.setText(fname)
+            # note save to profile handled by _update_template on text change
+            
+    @property
+    def _template_filter(self):
+        """Return QFileDialog filter string from selected exporter, if any
         
-        # build file filter from selected exporter, if any
+        Assembles from "template_filter" in current exporter. Always allows
+        for All Files by default.
+        
+        Per QFileDialog docs:
+        - File type filters included in parentheses
+        - Entries are separated by ";;"
+        
+        :return filter string for QFileDialog
+        """
+        
+        # search for "template_filter" defined in current exporter, if any
         file_filter = "All Files (*.*)"
         if self._exporter_spec is not None:
             try:
@@ -1528,17 +1551,7 @@ class BindingExportUi(common.BaseDialogUi):
             except:
                 msg = "Expected var 'template_filter' not defined in {}!".format(self._exporter_spec.origin)
                 logging.getLogger("system").warning(msg)
-                
-        # load dialog with file filter
-        fname, _ = QtWidgets.QFileDialog.getOpenFileName(
-            None,
-            "Path to output config template",
-            gremlin.util.userprofile_path(),
-            file_filter
-        )
-        if fname != "":
-            self.template_field.setText(fname)
-            # note save to profile handled by _update_template on text change
+        return file_filter
 
     def _update_template(self, new_path):
         """Updates the exporter template path"""
