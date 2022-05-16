@@ -559,8 +559,8 @@ class Configuration:
         :return list of custom exporters or None if no custom exporters exist
         """
         
-        exporters = self._data.get("custom_exporters", None)
-        if exporters is not None:
+        exporters = self._data.get("custom_exporters", "")
+        if exporters:
             exporters = set(sorted(
                 exporters,
                 key=lambda x: x.lower()
