@@ -1340,8 +1340,9 @@ class BindingExportUi(common.BaseDialogUi):
         """Find builtin exporter scripts"""
 
         exporters_list = []
-        for root, dir, file in os.walk("exporter_plugins"):
-            exporters_list.append(os.path.join(root,file))
+        for root, dirs, files in os.walk("exporter_plugins"):
+            for file in files:
+                exporters_list.append(os.path.join(root,file))
 
         return sorted(
             exporters_list,
