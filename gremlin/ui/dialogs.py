@@ -1519,7 +1519,6 @@ class BindingExportUi(common.BaseDialogUi):
 
         :param clicked whether or not the checkbox is ticked
         """
-        self.overwrite_checkbox.setEnabled(clicked)
         self.config.overwrite_exporter_template = clicked
 
     def _select_template(self):
