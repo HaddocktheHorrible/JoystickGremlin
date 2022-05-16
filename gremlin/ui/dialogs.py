@@ -1228,7 +1228,7 @@ class BindingExportUi(common.BaseDialogUi):
 
         # edit in place option
         self.overwrite_checkbox = QtWidgets.QCheckBox(
-            "Overwrite exporter template on Export"
+            "Overwrite Config Template on Export"
         )
         self.overwrite_checkbox.clicked.connect(self._overwrite_template)
         self.overwrite_checkbox.setChecked(self.config.overwrite_exporter_template)
