@@ -554,14 +554,14 @@ class Configuration:
         self.save()
 
     def get_exporter_list(self):
-        """Returns sorted set of user-defined exporter script paths
+        """Returns sorted list of user-defined exporter script paths
         
         :return list of custom exporters or None if no custom exporters exist
         """
         
         exporters = self._data.get("custom_exporters", "")
         if exporters:
-            exporters = set(sorted(
+            exporters = list(sorted(
                 exporters,
                 key=lambda x: x.lower()
             ))
@@ -574,11 +574,11 @@ class Configuration:
         :param exporter_path the path to the custom exporter to add
         """
         
-        # create custom_exporter set if it doesn't exist
-        if self._data.get("custom_exporters", None) is None:
-            self._data["custom_exporters"] = {exporter_path}
+        # create custom_exporter list if it doesn't exist
+        if self._data.get("custom_exporters", ""):
+            self._data["custom_exporters"].append(exporter_path)
         else:
-            self._data["custom_exporters"].add(exporter_path)
+            self._data["custom_exporters"] = [exporter_path]
         self.save()
             
     def remove_exporter(self, exporter_path):
@@ -587,7 +587,7 @@ class Configuration:
         :param exporter_path the path of the custom exporter script to remove
         """
         
-        self._data["custom_exporters"].discard(exporter_path)
+        self._data["custom_exporters"].remove(exporter_path)
         self.save()
         
     @property
