@@ -1447,13 +1447,13 @@ class BindingExportUi(common.BaseDialogUi):
         # enable export button if a valid exporter and template are selected
         if self._exporter_spec is None:
             self.export_button.setEnabled(False)
-            self.export_button.setToolTip("Select an exporter and template file first!")
+            self.export_button.setToolTip("Select an Exporter and Config Template first!")
         elif not os.path.isfile(self.template_field.text()):
             self.export_button.setEnabled(False)
-            self.export_button.setToolTip("Template file not found!")
+            self.export_button.setToolTip("Config Template not found!")
         else:
             self.export_button.setEnabled(True)
-            self.export_button.setToolTip("Export current bindings using selected exporter.")
+            self.export_button.setToolTip("Export current bindings using selected Exporter.")
 
     def _run_exporter(self):
         """Execute selected exporter with optional args"""
