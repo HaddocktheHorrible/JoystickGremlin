@@ -1219,7 +1219,7 @@ class BindingExportUi(common.BaseDialogUi):
         self.setWindowTitle("Binding Export")
 
         # create exporter dialog
-        self._exporter_spec = None
+        self._exporter_module = None
         self._create_ui()
 
     def _create_ui(self):
@@ -1352,19 +1352,20 @@ class BindingExportUi(common.BaseDialogUi):
             key=lambda x: x.lower()
             )
 
-    def _select_exporter(self, exporter):
+    def _select_exporter(self, exporter_path):
         """React to exporter selection by user"""
 
-        self._profile.settings.exporter_path = exporter
+        self._profile.settings.exporter_path = exporter_path
 
         # load module spec from path, if any
-        if exporter:
-            self._exporter_spec = importlib.util.spec_from_file_location("exporter_module",exporter)
-            self._show_help(importlib.util.module_from_spec(self._exporter_spec))
+        if exporter_path:
+            exporter_spec = importlib.util.spec_from_file_location("gremlin_binding_export", exporter_path)
+            self._exporter_module = importlib.util.module_from_spec(exporter_spec)
+            exporter_spec.loader.exec_module(self._exporter_module)
         else:
-            self._exporter_spec = None
-            self._show_help(None)
-
+            self._exporter_module = None
+        
+        self._show_help(self._exporter_module)
         self._update_button_status()
 
     def _add_exporter(self, fname):
@@ -1445,7 +1446,7 @@ class BindingExportUi(common.BaseDialogUi):
             self.exporter_remove.setEnabled(False)
             
         # enable export button if a valid exporter and template are selected
-        if self._exporter_spec is None:
+        if self._exporter_module is None:
             self.export_button.setEnabled(False)
             self.export_button.setToolTip("Select an Exporter and Config Template first!")
         elif not os.path.isfile(self.template_field.text()):
@@ -1459,14 +1460,13 @@ class BindingExportUi(common.BaseDialogUi):
         """Execute selected exporter with optional args"""
 
         # reload module now, in case user has changed module since initial selection
-        exporter_module = importlib.util.module_from_spec(self._exporter_spec)
-        self._show_help(exporter_module)
+        self._exporter_module.__loader__.exec_module(self._exporter_module)
+        self._show_help(self._exporter_module)
 
         # try to run the exporter
         template_path = self.profile.exporter_template_path
         try:
-            self._exporter_spec.loader.exec_module(exporter_module)
-            outfile = self.exporter_module.main(self._profile.get_all_bound_vjoys(),
+            outfile = self._exporter_module.main(self._profile.get_all_bound_vjoys(),
                                                 template_path,
                                                 self._profile._exporter_args
                                                 )
@@ -1556,12 +1556,13 @@ class BindingExportUi(common.BaseDialogUi):
         
         # search for "template_filter" defined in current exporter, if any
         file_filter = "All Files (*.*)"
-        if self._exporter_spec is not None:
-            try:
-                module = importlib.util.module_from_spec(self._exporter_spec)
-                file_filter = "{};;{}".format(module.template_filter, file_filter)
+        if self._exporter_module is not None:
+            try: 
+                # re-load module in case user has edited it after selection
+                self._exporter_module.__loader__.exec_module(self._exporter_module)
+                file_filter = "{};;{}".format(self._exporter_module.template_filter, file_filter)
             except:
-                msg = "Expected var 'template_filter' not defined in {}!".format(self._exporter_spec.origin)
+                msg = "Expected var 'template_filter' not defined in {}!".format(self._exporter_module.__file__)
                 logging.getLogger("system").warning(msg)
         return file_filter
 
