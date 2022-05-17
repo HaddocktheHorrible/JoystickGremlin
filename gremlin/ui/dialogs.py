@@ -1436,7 +1436,8 @@ class BindingExportUi(common.BaseDialogUi):
         """Enable/disable buttons based on current exporter selection"""
         
         # enable edit/remove for custom exporters only
-        if self.exporter_selection.currentText() in self.config.get_exporter_list():
+        is_custom = self.exporter_selection.currentText() in self.config.get_exporter_list()
+        if self.exporter_selection.currentText() and is_custom:
             self.exporter_edit.setEnabled(True)
             self.exporter_remove.setEnabled(True)
         else:
