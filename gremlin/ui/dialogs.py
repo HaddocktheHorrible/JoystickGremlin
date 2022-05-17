@@ -1417,7 +1417,7 @@ class BindingExportUi(common.BaseDialogUi):
     def _remove_exporter(self):
         """Removes the current executable from the configuration."""
         self.config.remove_exporter(self.exporter_selection.currentText())
-        self.populate_executables()
+        self.populate_exporters()
 
     def _show_help(self, module):
         """Show selected exporter help"""
