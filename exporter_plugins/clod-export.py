@@ -1,6 +1,7 @@
 """Exports to template file
 """
 
+import argparse
 from gremlin.common import InputType
 import gremlin.error
 import logging
@@ -25,7 +26,20 @@ axis_id_to_string = {
     8: "V",
 }
 
-def export(bound_vjoy_list,template_file):
+def main(bound_vjoy_list, template_file, arg_string):
+    """Orchestrate things"""
+    args = parse_args(arg_string.split())
+    # todo: loop over args.i to add to vjoy_map dict
+    return export(bound_vjoy_list, template_file)
+
+def parse_args(args):
+    """Parse optional arg string"""
+    parser = argparse.ArgumentParser(description="Create IL-2 CLoD config file from template")
+    # parser.add_argument("-i", nargs=2, action='append', help="VJoy ID and associated CLoD ID")
+    
+    return parser.parse_args(args)
+
+def export(bound_vjoy_list, template_file):
     
     fid = open(template_file, 'r')
     oldfile = fid.readlines()
@@ -70,7 +84,7 @@ def vjoy_item2clod_item(bound_item):
     """
     # get correct device ID as recognized by CLoD
     try:
-            device_str = vjoy_map[bound_item.vjoy_id]
+        device_str = vjoy_map[bound_item.vjoy_id]
     except KeyError:
         msg = ("IL-2 CLoD device ID not defined for vJoy Device %d!"
                "\nReplace VJoy Description with value in CLoD-generated \"confuser.ini\" config file."
