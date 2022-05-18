@@ -1231,7 +1231,6 @@ class BindingExportUi(common.BaseDialogUi):
             "Overwrite Config Template on Export"
         )
         self.overwrite_checkbox.clicked.connect(self._overwrite_template)
-        self.overwrite_checkbox.setChecked(self.config.overwrite_exporter_template)
 
         # exporter dropdown list
         self.exporter_layout = QtWidgets.QHBoxLayout()
@@ -1265,7 +1264,6 @@ class BindingExportUi(common.BaseDialogUi):
         self.args_field = QtWidgets.QLineEdit()
         self.args_field.setToolTip("POSIX-style arguments to pass to selected exporter.")
         self.args_field.textEdited.connect(self._update_args)
-        self.args_field.setText(self._profile.settings.exporter_arg_string)
 
         self.args_layout.addWidget(self.args_label)
         self.args_layout.addWidget(self.args_field)
@@ -1276,7 +1274,6 @@ class BindingExportUi(common.BaseDialogUi):
         self.template_field = QtWidgets.QLineEdit()
         self.template_field.setToolTip("Output file template to use.")
         self.template_field.textChanged.connect(self._update_template)
-        self.template_field.setText(self._profile.settings.exporter_template_path)
         self.template_select = QtWidgets.QPushButton()
         self.template_select.setIcon(QtGui.QIcon("gfx/button_edit.png"))
         self.template_select.clicked.connect(self._select_template)
@@ -1302,8 +1299,11 @@ class BindingExportUi(common.BaseDialogUi):
         self.export_button.clicked.connect(self._run_exporter)
         self.main_layout.addWidget(self.export_button)
 
-        # create exporter selection with exporter profile pre-selected
+        # pre-populate profile and config setttings, if any
         self.populate_exporters(self._profile.settings.exporter_path)
+        self.template_field.setText(self._profile.settings.exporter_template_path)
+        self.args_field.setText(self._profile.settings.exporter_arg_string)
+        self.overwrite_checkbox.setChecked(self.config.overwrite_exporter_template)
 
     def closeEvent(self, event):
         """Closes the calibration window.
