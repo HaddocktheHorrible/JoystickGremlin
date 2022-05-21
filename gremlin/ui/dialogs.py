@@ -1466,12 +1466,15 @@ class BindingExportUi(common.BaseDialogUi):
         # try to run the exporter
         template_path = self.profile.exporter_template_path
         try:
+            template_fid = open(template_path, 'r')
             outfile = self._exporter_module.main(self._profile.get_all_bound_vjoys(),
-                                                template_path,
+                                                template_fid.readlines(),
                                                 self._profile._exporter_args
                                                 )
+            template_fid.close()
         except Exception as e:
             # todo: better error handling for common exceptions - if main is missing, etc.
+            # todo: handle if file cannot be opened
             error_display = QtWidgets.QMessageBox(
                 QtWidgets.QMessageBox.Critical,
                 "Could not execute exporter!",
@@ -1479,6 +1482,7 @@ class BindingExportUi(common.BaseDialogUi):
                 QtWidgets.QMessageBox.Ok
             )
             error_display.show()
+            template_fid.close()
             return -1  
 
         # write to template in-place or prompt for new file
@@ -1506,6 +1510,7 @@ class BindingExportUi(common.BaseDialogUi):
                 QtWidgets.QMessageBox.Ok
             )
             error_display.show()
+            fid.close()
             return -1
         return 0
 
