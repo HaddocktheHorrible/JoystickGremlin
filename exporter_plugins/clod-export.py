@@ -37,8 +37,8 @@ def main(bound_vjoy_dict, template_file, arg_string):
     
     args = _parse_args(arg_string.split())
     _ignore_flags = args.ignore_flag
-    for pair in args.device_map:
-        _vjoy_map[pair[0]] = "vJoy_Device-%s".format(pair[1])
+    for vjoy_id, clod_id in args.device_map:
+        _vjoy_map[vjoy_id] = "vJoy_Device-%s".format(clod_id)
     
     return _export(bound_vjoy_dict, template_file)
 
