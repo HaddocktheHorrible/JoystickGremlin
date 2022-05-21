@@ -25,6 +25,23 @@ _axis_id_to_string = {
     8: "V",
 }
 
+class AppendMapPair(argparse.Action):
+    """Validates vjoy_id, clod_id pair is well-formed; appends to existing list, if any"""
+    def __call__(self, parser, namespace, values, option_string=None):
+        
+        # validate
+        vjoy_id, clod_id = values
+        try:
+            vjoy_id = int(vjoy_id)
+        except ValueError:
+            raise argparse.ArgumentError(self, "vjoy_id passed to {} must be a valid integer".format(self.dest))
+        clod_id.replace("vJoy_Device-","")
+        
+        # append and return
+        items = getattr(namespace, self.dest) or []
+        items.append([vjoy_id, clod_id])
+        setattr(namespace, self.dest, items)
+
 def main(bound_vjoy_dict, template_file, arg_string):
     """Process passed args, run exporter with passed binding list and template
     
@@ -45,10 +62,8 @@ def main(bound_vjoy_dict, template_file, arg_string):
 def _parse_args(args):
     """Parse optional arg string"""
     parser = argparse.ArgumentParser(description="Create IL-2 CLoD config file from template")
-    parser.add_argument("-m", "--device_map", nargs=2, action='append', 
+    parser.add_argument("-m", "--device_map", nargs=2, action=AppendMapPair, 
                         metavar=('VJOY_ID','CLOD_ID'), help="vjoy id and associated CLoD id")
-    # todo: validate map as <int str> pair
-    # todo: strip "vJoy-Device-" from CLoD ID, if passed
     parser.add_argument("-i", "--ignore_flag", type=str, nargs='?', action='append', default=["#"],
                         type=lambda x: x if len(x) <=1 else False, # limit flag to one char at a time
                         help="binding assignments starting with IGNORE_FLAG are ignored")
@@ -102,8 +117,8 @@ def _vjoy_item2clod_item(bound_item):
         device_str = _vjoy_map[bound_item.vjoy_id]
     except KeyError:
         msg = ("CLoD device ID not defined for vJoy Device %d!"
-               "\nSpecify vjoy to CLoD mapping with arg \"-m %d <CLoD-vJoy_Device-ID>\" "
-               "\nHint: find CLoD-vJoy_Device-ID from CLoD-generated \"confuser.ini\" config file."
+               "\nSpecify vjoy to CLoD mapping with arg \"-m %d <CLoD_Device_ID>\" "
+               "\nHint: CLoD will report VJoy devices as \"vJoy_Device-<ID>\" when binding. This <ID> is what you want to specify."
               ).format(bound_item.vjoy_id, bound_item.vjoy_id)
         raise gremlin.error._ExporterError(msg)
     
