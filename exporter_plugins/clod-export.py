@@ -1,4 +1,36 @@
-"""Exports to template file
+"""Populates profile bindings to IL-2 CLoD config file from template.
+
+Optional arguments:
+
+    -m, --device_map <VJoy_ID> <CLoD_ID>
+            VJoy ID number and associated CLoD ID string; only one
+            pair may be specified per flag; multiple flags may be
+            specified
+
+    -i, --ignore_flag <ignore_flag>
+            binding assignments starting with IGNORE_FLAG are ignored; 
+            ignored bindings are not listed in the output file; 
+            multiple flags may be specified, but each flag may only 
+            consist of one character; default = '#'
+                        
+Arguments example: 
+
+    To register VJoy 1 as "vJoy_Device-66210FF9", VJoy 2 as 
+    "vJoy_Device-A4E92C9", and to ignore any bindings set in Joystick 
+    Gremlin starting with '#':
+    
+    -m 1 66210FF9 -m 2 A4E92C9 -i #
+                        
+Hint: 
+
+    To find the CLoD ID for each VJoy device, manually bind one VJoy 
+    output in CLoD. CLoD will report VJoy device bindings in the format:
+    
+    "vJoy_Device-<CLoD_ID>+Key#=<binding>"
+    
+    You may then register that CLoD_ID with its corresponding VJoy_ID as 
+    described above.
+    
 """
 
 import argparse
@@ -9,7 +41,7 @@ template_filter = "CLoD Config (*.ini)"
 _comment_flags = ["[", ";"]
 _ignore_flags = []
 _vjoy_map = {}
-    
+
 _axis_id_to_string = {
     1: "X",
     2: "Y",
@@ -57,7 +89,7 @@ def main(bound_vjoy_dict, template_file, arg_string):
 
 def _parse_args(args):
     """Parse optional arg string"""
-    parser = argparse.ArgumentParser(description="Create IL-2 CLoD config file from template")
+    parser = argparse.ArgumentParser(usage=__doc__)
     parser.add_argument("-m", "--device_map", 
                         nargs=2, 
                         action=AppendMapPair, 
@@ -120,9 +152,7 @@ def _vjoy_item2clod_item(bound_item):
         device_str = _vjoy_map[bound_item.vjoy_id]
     except KeyError:
         msg = ("CLoD device ID not defined for vJoy Device {:d}!"
-               "\nSpecify vjoy to CLoD mapping with arg \"-m {:d} <CLoD_Device_ID>\" "
-               "\nHint: CLoD will report VJoy devices as \"vJoy_Device-<ID>\" when binding. This <ID> is what you want to specify."
-              ).format(bound_item.vjoy_id, bound_item.vjoy_id)
+              ).format(bound_item.vjoy_id)
         raise gremlin.error._ExporterError(msg)
     
     # get correct axis/button naming for clod
@@ -132,7 +162,8 @@ def _vjoy_item2clod_item(bound_item):
     elif input_type == InputType.JoystickButton:
         input_str = "Key{:d}".format(bound_item.input_id - 1)
     else:
-        msg = "CLoD _export not defined for outputs of type \"{}}\"".format(InputType.to_string(input_type))
+        msg = ("CLoD _export not defined for outputs of type \"{}\""
+              ).format(InputType.to_string(input_type))
         raise gremlin.error._ExporterError(msg)
     
     return  "{}+{}={}".format(device_str,input_str,bound_item.binding)
