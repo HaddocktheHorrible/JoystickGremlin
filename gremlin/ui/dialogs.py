@@ -1432,6 +1432,8 @@ class BindingExportUi(common.BaseDialogUi):
                 "Help for the selected exporter is listed in this dialog once an "
                 "exporter is selected."
                 )
+        if not self.exporter_help.text().strip():
+            self.exporter_help.setText("Select exporter has no docstring.")
             
     def _update_button_status(self):
         """Enable/disable buttons based on current exporter selection"""
