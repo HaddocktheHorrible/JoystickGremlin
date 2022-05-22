@@ -1464,29 +1464,29 @@ class BindingExportUi(common.BaseDialogUi):
         self._show_help(self._exporter_module)
 
         # try to run the exporter
-        template_path = self.profile.exporter_template_path
+        template_path = self._profile.settings.exporter_template_path
         try:
             template_fid = open(template_path, 'r')
             outfile = self._exporter_module.main(self._profile.get_all_bound_vjoys(),
                                                 template_fid.readlines(),
-                                                self._profile._exporter_args
+                                                self._profile.settings.exporter_arg_string
                                                 )
             template_fid.close()
         except Exception as e:
             # todo: better error handling for common exceptions - if main is missing, etc.
             # todo: handle if file cannot be opened
-            error_display = QtWidgets.QMessageBox(
-                QtWidgets.QMessageBox.Critical,
-                "Could not execute exporter!",
-                e.value,
-                QtWidgets.QMessageBox.Ok
-            )
-            error_display.show()
+            # error_display = QtWidgets.QMessageBox(
+            #     QtWidgets.QMessageBox.Critical,
+            #     "Could not execute exporter!",
+            #     e.args[0],
+            #     QtWidgets.QMessageBox.Ok
+            # )
+            # error_display.show()
             template_fid.close()
-            return -1  
+            raise(e)
 
         # write to template in-place or prompt for new file
-        if self.config.overwrite_exporter_template():
+        if self.config.overwrite_exporter_template:
             fname = template_path
         else:
             fname, _ = QtWidgets.QFileDialog.getSaveFileName(
@@ -1500,18 +1500,18 @@ class BindingExportUi(common.BaseDialogUi):
         try:
             if fname != "":
                 fid = open(fname, "w")
-                fid.write(outfile)
+                fid.writelines(outfile)
                 fid.close()
         except Exception as e:
-            error_display = QtWidgets.QMessageBox(
-                QtWidgets.QMessageBox.Critical,
-                "Could not write to file!",
-                e.value,
-                QtWidgets.QMessageBox.Ok
-            )
-            error_display.show()
+            # error_display = QtWidgets.QMessageBox(
+            #     QtWidgets.QMessageBox.Critical,
+            #     "Could not write to file!",
+            #     e.value,
+            #     QtWidgets.QMessageBox.Ok
+            # )
+            # error_display.show()
             fid.close()
-            return -1
+            raise(e)
         return 0
 
     def _update_args(self, arg_string):
