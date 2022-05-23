@@ -18,6 +18,7 @@
 from operator import mod
 import os
 import logging
+import traceback
 import subprocess
 import sys
 import winreg
@@ -29,6 +30,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import dill
 
 import gremlin
+import gremlin.error
 from . import common, ui_about
 
 
@@ -1358,6 +1360,7 @@ class BindingExportUi(common.BaseDialogUi):
         self._profile.settings.exporter_path = exporter_path
 
         # load module spec from path, if any
+        # todo: check for main function defined
         if exporter_path:
             exporter_spec = importlib.util.spec_from_file_location("gremlin_binding_export", exporter_path)
             self._exporter_module = importlib.util.module_from_spec(exporter_spec)
@@ -1466,26 +1469,27 @@ class BindingExportUi(common.BaseDialogUi):
         self._show_help(self._exporter_module)
 
         # try to run the exporter
+        # display full trace for non-gremlin errors
         template_path = self._profile.settings.exporter_template_path
         try:
             template_fid = open(template_path, 'r')
-            outfile = self._exporter_module.main(self._profile.get_all_bound_vjoys(),
-                                                template_fid.readlines(),
-                                                self._profile.settings.exporter_arg_string
-                                                )
-            template_fid.close()
+            outfile = self._exporter_module.main(
+                self._profile.get_all_bound_vjoys(),
+                template_fid.readlines(),
+                self._profile.settings.exporter_arg_string
+                )
+        except gremlin.error.GremlinError as e:
+            msg = "Failed to export!\n"
+            msg += e.value
+            gremlin.util.display_error(msg)
+            return
         except Exception as e:
-            # todo: better error handling for common exceptions - if main is missing, etc.
-            # todo: handle if file cannot be opened
-            # error_display = QtWidgets.QMessageBox(
-            #     QtWidgets.QMessageBox.Critical,
-            #     "Could not execute exporter!",
-            #     e.args[0],
-            #     QtWidgets.QMessageBox.Ok
-            # )
-            # error_display.show()
+            msg = "Failed to export!\n"
+            msg += " ".join(traceback.format_exception(*sys.exc_info()))
+            gremlin.util.display_error(msg)
+            return
+        finally:
             template_fid.close()
-            raise(e)
 
         # write to template in-place or prompt for new file
         if self.config.overwrite_exporter_template:
@@ -1496,25 +1500,19 @@ class BindingExportUi(common.BaseDialogUi):
                 "Save As",
                 template_path,
                 self._template_filter
-        ) 
+                )
             
         # try to write to file
-        try:
-            if fname != "":
+        if fname != "":
+            try:
                 fid = open(fname, "w")
                 fid.writelines(outfile)
+            except Exception as e:
+                msg = "Failed to write to {}!".format(fname)
+                msg += " ".join(traceback.format_exception(*sys.exc_info()))
+                gremlin.util.display_error(msg)
+            finally:
                 fid.close()
-        except Exception as e:
-            # error_display = QtWidgets.QMessageBox(
-            #     QtWidgets.QMessageBox.Critical,
-            #     "Could not write to file!",
-            #     e.value,
-            #     QtWidgets.QMessageBox.Ok
-            # )
-            # error_display.show()
-            fid.close()
-            raise(e)
-        return 0
 
     def _update_args(self, arg_string):
         """Stores exporter argument string.
