@@ -62,7 +62,9 @@ class AppendMapPair(argparse.Action):
         try:
             vjoy_id = int(vjoy_id)
         except ValueError:
-            raise argparse.ArgumentError(self, "vjoy_id passed to {} must be a valid integer".format(self.dest))
+            raise gremlin.error.ExporterError((
+                "Invalid VJoy_ID argument: '{}' is not a valid integer"
+                ).format(vjoy_id))
         clod_id = clod_id.replace("vJoy_Device-","")
         
         # append and return
@@ -151,9 +153,10 @@ def _vjoy_item2clod_item(bound_item):
     try:
         device_str = _vjoy_map[bound_item.vjoy_id]
     except KeyError:
-        msg = ("CLoD device ID not defined for vJoy Device {:d}!"
+        msg = ("Missing device_map argument: "
+               "CLoD_ID not defined for vJoy Device {:d}"
               ).format(bound_item.vjoy_id)
-        raise gremlin.error._ExporterError(msg)
+        raise gremlin.error.ExporterError(msg)
     
     # get correct axis/button naming for clod
     input_type = bound_item.input_type
@@ -162,8 +165,9 @@ def _vjoy_item2clod_item(bound_item):
     elif input_type == InputType.JoystickButton:
         input_str = "Key{:d}".format(bound_item.input_id - 1)
     else:
-        msg = ("CLoD _export not defined for outputs of type \"{}\""
+        msg = ("Invalid binding: "
+               "CLoD export not defined for outputs of type \"{}\""
               ).format(InputType.to_string(input_type))
-        raise gremlin.error._ExporterError(msg)
+        raise gremlin.error.ExporterError(msg)
     
     return  "{}+{}={}".format(device_str,input_str,bound_item.binding)
