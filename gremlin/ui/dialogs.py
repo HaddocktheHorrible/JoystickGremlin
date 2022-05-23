@@ -1360,11 +1360,22 @@ class BindingExportUi(common.BaseDialogUi):
         self._profile.settings.exporter_path = exporter_path
 
         # load module spec from path, if any
-        # todo: check for main function defined
+        # reject exporter if no 'main' function defined
         if exporter_path:
             exporter_spec = importlib.util.spec_from_file_location("gremlin_binding_export", exporter_path)
             self._exporter_module = importlib.util.module_from_spec(exporter_spec)
             exporter_spec.loader.exec_module(self._exporter_module)
+            try:
+                if not callable(self._exporter_module.main):
+                    raise AttributeError()
+            except AttributeError:
+                msg = ("Invalid exporter!\n"
+                       "EntryPointError: exporter module '{}' "
+                       "does not contain an entry point function 'main'"
+                      ).format(exporter_path)
+                gremlin.util.display_error(msg)
+                self.exporter_selection.setCurrentIndex(0)
+                return
         else:
             self._exporter_module = None
         
