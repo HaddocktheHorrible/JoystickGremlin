@@ -90,8 +90,22 @@ def main(bound_vjoy_dict, template_file, arg_string):
     return _export(bound_vjoy_dict, template_file)
 
 def _parse_args(args):
-    """Parse optional arg string"""
-    parser = argparse.ArgumentParser(usage=__doc__)
+    """Parse optional arg string
+    
+    Joystick Gremlin hangs if argparse exists with a write to terminal.
+    To avoid this:
+    
+        1. Set `add_help=False` to invalidate '-h' or '--help' outputs
+        2. Use `parser.parse_known_args(args)` to filter for unknown args
+        
+    Here we also raise an ExporterError if unknown args were passed.
+    Although this is not strictly necessary, it to the user's benefit to
+    error on a typo rather than silently ignoring it.
+    
+    param: args argument list from arg_string.split()
+    """
+    
+    parser = argparse.ArgumentParser(usage=__doc__, add_help=False)
     parser.add_argument("-m", "--device_map", 
                         nargs=2, 
                         action=AppendMapPair, 
@@ -104,8 +118,12 @@ def _parse_args(args):
                         type=lambda x: x if len(x) <=1 else False, # limit flag to one char at a time
                         help="binding assignments starting with IGNORE_FLAG are ignored"
                         )
-    
-    return parser.parse_args(args)
+    valid, unknown = parser.parse_known_args(args)
+    if unknown:
+        msg = ("ArgumentError: unknown argument '{}'"
+               ).format(unknown[0])
+        raise gremlin.error.ExporterError(msg)
+    return valid
 
 def _export(bound_vjoy_dict, template_file):
     
