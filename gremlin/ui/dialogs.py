@@ -1242,15 +1242,15 @@ class BindingExportUi(common.BaseDialogUi):
         self.exporter_selection.currentTextChanged.connect(self._select_exporter)
         self.exporter_add = QtWidgets.QPushButton()
         self.exporter_add.setIcon(QtGui.QIcon("gfx/button_add.png"))
-        self.exporter_add.setToolTip("Add custom exporter script to config.")
+        self.exporter_add.setToolTip("Add custom exporter script to config")
         self.exporter_add.clicked.connect(self._new_exporter)
         self.exporter_remove = QtWidgets.QPushButton()
         self.exporter_remove.setIcon(QtGui.QIcon("gfx/button_delete.png"))
-        self.exporter_add.setToolTip("Remove custom exporter script from config.")
+        self.exporter_add.setToolTip("Remove custom exporter script from config")
         self.exporter_remove.clicked.connect(self._remove_exporter)
         self.exporter_edit = QtWidgets.QPushButton()
         self.exporter_edit.setIcon(QtGui.QIcon("gfx/button_edit.png"))
-        self.exporter_add.setToolTip("Edit saved exporter script path.")
+        self.exporter_add.setToolTip("Edit saved exporter script path")
         self.exporter_edit.clicked.connect(self._edit_exporter)
 
         self.exporter_layout.addWidget(self.exporter_label)
@@ -1264,7 +1264,7 @@ class BindingExportUi(common.BaseDialogUi):
         self.args_layout = QtWidgets.QHBoxLayout()
         self.args_label = QtWidgets.QLabel("Arguments")
         self.args_field = QtWidgets.QLineEdit()
-        self.args_field.setToolTip("POSIX-style arguments to pass to selected exporter.")
+        self.args_field.setToolTip("POSIX-style arguments to pass to selected exporter")
         self.args_field.textEdited.connect(self._update_args)
 
         self.args_layout.addWidget(self.args_label)
@@ -1274,7 +1274,7 @@ class BindingExportUi(common.BaseDialogUi):
         self.template_layout = QtWidgets.QHBoxLayout()
         self.template_label = QtWidgets.QLabel("Config Template")
         self.template_field = QtWidgets.QLineEdit()
-        self.template_field.setToolTip("Output file template to use.")
+        self.template_field.setToolTip("Output file template to use")
         self.template_field.textChanged.connect(self._update_template)
         self.template_select = QtWidgets.QPushButton()
         self.template_select.setIcon(QtGui.QIcon("gfx/button_edit.png"))
@@ -1470,7 +1470,7 @@ class BindingExportUi(common.BaseDialogUi):
             self.export_button.setToolTip("Config Template not found!")
         else:
             self.export_button.setEnabled(True)
-            self.export_button.setToolTip("Export current bindings using selected Exporter.")
+            self.export_button.setToolTip("Export current bindings using selected Exporter")
 
     def _run_exporter(self):
         """Execute selected exporter with optional args"""
