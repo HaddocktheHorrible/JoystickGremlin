@@ -98,4 +98,11 @@ class ExporterError(GremlinError):
     
     def __init__(self, value):
         super().__init__(value)
-        
+
+class ImporterError(GremlinError):
+    
+    """Exception raised when an error occurs during binding import."""
+    
+    def __init__(self, value):
+        super().__init__(value)
+               
