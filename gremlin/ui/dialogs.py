@@ -1586,3 +1586,350 @@ class BindingExportUi(common.BaseDialogUi):
         """Updates the exporter template path"""
         self._profile.settings.exporter_template_path = new_path
         self._update_button_status()
+
+class BindingImportUi(common.BaseDialogUi):
+
+    """UI allowing user to import binding settings from game-specific file."""
+
+    def __init__(self, profile_data, parent=None):
+        """Creates a new importer UI instance.
+
+        :param parent the parent of this widget
+        """
+        super().__init__(parent)
+
+        # Actual configuration object being managed
+        self.config = gremlin.config.Configuration()
+        self._profile = profile_data
+        self.setMinimumWidth(400)
+        self.setWindowTitle("Binding Import")
+
+        # create importer dialog
+        self._importer_module = None
+        self._create_ui()
+
+    def _create_ui(self):
+        """Creates the binding importer page."""
+        self.main_layout = QtWidgets.QVBoxLayout(self)
+
+        # edit in place option
+        self.overwrite_checkbox = QtWidgets.QCheckBox(
+            "Overwrite Config Template on Import"
+        )
+        self.overwrite_checkbox.clicked.connect(self._overwrite_template)
+
+        # importer dropdown list
+        self.importer_layout = QtWidgets.QHBoxLayout()
+        self.importer_label = QtWidgets.QLabel("Importer")
+        self.importer_selection = QtWidgets.QComboBox()
+        self.importer_selection.setMinimumWidth(300)
+        self.importer_selection.currentTextChanged.connect(self._select_importer)
+        self.importer_add = QtWidgets.QPushButton()
+        self.importer_add.setIcon(QtGui.QIcon("gfx/button_add.png"))
+        self.importer_add.setToolTip("Add custom importer script to config")
+        self.importer_add.clicked.connect(self._new_importer)
+        self.importer_remove = QtWidgets.QPushButton()
+        self.importer_remove.setIcon(QtGui.QIcon("gfx/button_delete.png"))
+        self.importer_add.setToolTip("Remove custom importer script from config")
+        self.importer_remove.clicked.connect(self._remove_importer)
+        self.importer_edit = QtWidgets.QPushButton()
+        self.importer_edit.setIcon(QtGui.QIcon("gfx/button_edit.png"))
+        self.importer_add.setToolTip("Edit saved importer script path")
+        self.importer_edit.clicked.connect(self._edit_importer)
+
+        self.importer_layout.addWidget(self.importer_label)
+        self.importer_layout.addWidget(self.importer_selection)
+        self.importer_layout.addWidget(self.importer_add)
+        self.importer_layout.addWidget(self.importer_remove)
+        self.importer_layout.addWidget(self.importer_edit)
+        self.importer_layout.addStretch()
+
+        # arguments text field
+        self.args_layout = QtWidgets.QHBoxLayout()
+        self.args_label = QtWidgets.QLabel("Arguments")
+        self.args_field = QtWidgets.QLineEdit()
+        self.args_field.setToolTip("POSIX-style arguments to pass to selected importer")
+        self.args_field.textEdited.connect(self._update_args)
+
+        self.args_layout.addWidget(self.args_label)
+        self.args_layout.addWidget(self.args_field)
+
+        self.main_layout.addWidget(self.overwrite_checkbox)
+        self.main_layout.addLayout(self.importer_layout)
+        self.main_layout.addLayout(self.args_layout)
+        self.main_layout.addStretch()
+
+        self.importer_help = QtWidgets.QLabel("")
+        self.importer_help.setStyleSheet("QLabel { background-color : '#FFF4B0'; }")
+        self.importer_help.setWordWrap(True)
+        self.importer_help.setFrameShape(QtWidgets.QFrame.Box)
+        self.importer_help.setMargin(10)
+        self.main_layout.addWidget(self.importer_help)
+
+        self.import_button = QtWidgets.QPushButton("Import")
+        self.import_button.clicked.connect(self._run_importer)
+        self.main_layout.addWidget(self.import_button)
+
+        # pre-populate profile and config setttings, if any
+        self.populate_importers(self._profile.settings.importer_path)
+        self.template_field.setText(self._profile.settings.importer_template_path)
+        self.args_field.setText(self._profile.settings.importer_arg_string)
+        self.overwrite_checkbox.setChecked(self.config.overwrite_importer_template)
+
+    def closeEvent(self, event):
+        """Closes the calibration window.
+
+        :param event the close event
+        """
+        super().closeEvent(event)
+
+    def populate_importers(self, importer_path=""):
+        """Populates the importer drop down menu.
+
+        Menu begins with empty entry, then valid custom importers in alphabetical order,
+        then built-in importers in alphabetical order.
+
+        :param importer_path name of the importer to pre select, if any
+        """
+        self.importer_selection.clear()
+        self.importer_selection.addItem("")
+        importer_list = self.config.get_importer_list()
+        for path in importer_list:
+            if os.path.isfile(path):
+                self.importer_selection.addItem(path)
+            else:
+                msg = "Could not find custom importer '{}'. Removed from config.".format(path)
+                self.config.remove_importer(path)
+                logging.getLogger("system").warning(msg)
+        for path in self._discover_importers():
+            self.importer_selection.addItem(path)
+
+        # Select the provided executable if it exists
+        # otherwise the first one in the list
+        index = max(0, self.importer_selection.findText(importer_path))
+        self.importer_selection.setCurrentIndex(index)
+
+    def _discover_importers(self):
+        """Find builtin importer scripts"""
+
+        importers_list = []
+        for root, dirs, files in os.walk("importer_plugins"):
+            for file in files:
+                if os.path.splitext(file)[1] == ".py":
+                    importers_list.append(os.path.join(root,file))
+
+        return sorted(
+            importers_list,
+            key=lambda x: x.lower()
+            )
+
+    def _select_importer(self, importer_path):
+        """React to importer selection by user"""
+
+        self._profile.settings.importer_path = importer_path
+
+        # load module spec from path, if any
+        # reject importer if no 'main' function defined
+        if importer_path:
+            importer_spec = importlib.util.spec_from_file_location("gremlin_binding_import", importer_path)
+            self._importer_module = importlib.util.module_from_spec(importer_spec)
+            importer_spec.loader.exec_module(self._importer_module)
+            try:
+                if not callable(self._importer_module.main):
+                    raise AttributeError()
+            except AttributeError:
+                msg = ("Invalid importer!\n"
+                       "EntryPointError: importer module '{}' "
+                       "does not contain an entry point function 'main'"
+                      ).format(importer_path)
+                gremlin.util.display_error(msg)
+                self.importer_selection.setCurrentIndex(0)
+                return
+        else:
+            self._importer_module = None
+        
+        self._show_help(self._importer_module)
+        self._update_button_status()
+
+    def _add_importer(self, fname):
+        """Adds the provided importer to the list of configurations.
+
+        :param fname the importer script path
+        """
+        if fname not in self.config.get_importer_list():
+            self.config.add_importer(fname)
+            self.populate_importers(fname)
+        else:
+            self.importer_selection.setCurrentIndex(
+                self.importer_selection.findText(fname)
+            )
+
+    def _edit_importer(self):
+        """Allows editing the path of an importer."""
+        new_text, flag = QtWidgets.QInputDialog.getText(
+            self,
+            "Change importer",
+            "Change the importer path entry.",
+            QtWidgets.QLineEdit.Normal,
+            self.importer_selection.currentText()
+        )
+
+        # if the user did click on ok and entry is valid
+        # try to remove existing entry, add new entry
+        if flag:
+            if not os.path.isfile(new_text):
+                logging.getLogger("system").warning("Could not find importer at {}! Ignoring".format(new_text))
+            elif os.path.splitext(new_text)[1] == ".py":
+                logging.getLogger("system").warning("Importer at {} is not a valid python file! Ignoring".format(new_text))
+            else:
+                self.config.remove_importer(self.importer_selection.currentText())
+                self._add_importer(new_text)
+
+    def _new_importer(self):
+        """Prompts the user to select a new importer to add to the
+        profile.
+        """
+        fname, _ = QtWidgets.QFileDialog.getOpenFileName(
+            None,
+            "Path to Importer",
+            gremlin.util.userprofile_path(),
+            "Importer Script (*.py)"
+        )
+        if fname != "":
+            self._add_importer(fname)
+
+    def _remove_importer(self):
+        """Removes the current executable from the configuration."""
+        self.config.remove_importer(self.importer_selection.currentText())
+        self.populate_importers()
+
+    def _show_help(self, module):
+        """Show selected importer help"""
+
+        if module is not None:
+            self.importer_help.setText(getdoc(module))
+        else:
+            self.importer_help.setText(
+                "Importers print VJoy bindings to a game-specific configuration file. "
+                "Optional arguments may be passed to the importer function above. "
+                "Help for the selected importer is listed in this dialog once an "
+                "importer is selected."
+                )
+        if not self.importer_help.text().strip():
+            self.importer_help.setText("Select importer has no docstring.")
+            
+    def _update_button_status(self):
+        """Enable/disable buttons based on current importer selection"""
+        
+        # enable edit/remove for custom importers only
+        is_custom = self.importer_selection.currentText() in self.config.get_importer_list()
+        if self.importer_selection.currentText() and is_custom:
+            self.importer_edit.setEnabled(True)
+            self.importer_remove.setEnabled(True)
+        else:
+            self.importer_edit.setEnabled(False)
+            self.importer_remove.setEnabled(False)
+            
+        # enable import button if a valid importer and template are selected
+        if self._importer_module is None:
+            self.import_button.setEnabled(False)
+            self.import_button.setToolTip("Select an Importer and Config Template first!")
+        elif not os.path.isfile(self.template_field.text()):
+            self.import_button.setEnabled(False)
+            self.import_button.setToolTip("Config Template not found!")
+        else:
+            self.import_button.setEnabled(True)
+            self.import_button.setToolTip("Import current bindings using selected Importer")
+
+    def _run_importer(self):
+        """Execute selected importer with optional args"""
+
+        # reload module now, in case user has changed module since initial selection
+        self._importer_module.__loader__.exec_module(self._importer_module)
+        self._show_help(self._importer_module)
+
+        # try to run the importer
+        # display full trace for non-gremlin errors
+        template_path = self._profile.settings.importer_template_path
+        try:
+            template_fid = open(template_path, 'r')
+            outfile = self._importer_module.main(
+                self._profile.get_all_bound_vjoys(),
+                template_fid.readlines(),
+                self._profile.settings.importer_arg_string
+                )
+        except gremlin.error.GremlinError as e:
+            msg = "Failed to import!\n"
+            msg += e.value
+            gremlin.util.display_error(msg)
+            return
+        except Exception as e:
+            msg = "Failed to import!\n"
+            msg += " ".join(traceback.format_exception(*sys.exc_info()))
+            gremlin.util.display_error(msg)
+            return
+        finally:
+            template_fid.close()
+
+        # write to template in-place or prompt for new file
+        if self.config.overwrite_importer_template:
+            fname = template_path
+        else:
+            fname, _ = QtWidgets.QFileDialog.getSaveFileName(
+                None,
+                "Save As",
+                template_path,
+                self._import_filter
+                )
+            
+        # try to write to file
+        if fname != "":
+            try:
+                fid = open(fname, "w")
+                fid.writelines(outfile)
+            except Exception as e:
+                msg = "Failed to write to {}!".format(fname)
+                msg += " ".join(traceback.format_exception(*sys.exc_info()))
+                gremlin.util.display_error(msg)
+            finally:
+                fid.close()
+
+    def _update_args(self, arg_string):
+        """Stores importer argument string.
+
+        :param arg_string POSIX-style command-line arg string
+        """
+        self._profile.settings.importer_arg_string = arg_string
+
+    def _overwrite_template(self, clicked):
+        """Stores config importer template overwrite preference.
+
+        :param clicked whether or not the checkbox is ticked
+        """
+        self.config.overwrite_importer_template = clicked
+
+    @property
+    def _import_filter(self):
+        """Return QFileDialog filter string from selected importer, if any
+        
+        Assembles from "import_filter" in current importer. Always allows
+        for All Files by default.
+        
+        Per QFileDialog docs:
+        - File type filters included in parentheses
+        - Entries are separated by ";;"
+        
+        :return filter string for QFileDialog
+        """
+        
+        # search for "import_filter" defined in current importer, if any
+        file_filter = "All Files (*.*)"
+        if self._importer_module is not None:
+            try: 
+                # re-load module in case user has edited it after selection
+                self._importer_module.__loader__.exec_module(self._importer_module)
+                file_filter = "{};;{}".format(self._importer_module.import_filter, file_filter)
+            except:
+                msg = "Expected var 'import_filter' not defined in {}!".format(self._importer_module.__file__)
+                logging.getLogger("system").warning(msg)
+        return file_filter
