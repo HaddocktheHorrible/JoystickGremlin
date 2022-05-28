@@ -608,3 +608,60 @@ class Configuration:
         if type(value) == bool:
             self._data["overwrite_exporter_template"] = value
             self.save()
+
+    def get_importer_list(self):
+        """Returns sorted list of user-defined importer script paths
+        
+        :return list of custom importers or None if no custom importers exist
+        """
+        
+        importers = self._data.get("custom_importers", "")
+        if importers:
+            importers = list(sorted(
+                importers,
+                key=lambda x: x.lower()
+            ))
+            
+        return importers
+    
+    def add_importer(self, importer_path):
+        """Add importer to config list
+        
+        :param importer_path the path to the custom importer to add
+        """
+        
+        # create custom_importer list if it doesn't exist
+        if self._data.get("custom_importers", ""):
+            self._data["custom_importers"].append(importer_path)
+        else:
+            self._data["custom_importers"] = [importer_path]
+        self.save()
+            
+    def remove_importer(self, importer_path):
+        """Remove importer from config list
+        
+        :param importer_path the path of the custom importer script to remove
+        """
+        
+        self._data["custom_importers"].remove(importer_path)
+        self.save()
+        
+    @property
+    def importer_resolution_strategy(self):
+        """Returns strategy flag for resolving conflicts during binding import.
+        
+        :return stored flag or "preserve" if invalid definition
+        """
+        flag = self._data.get("importer_resolution_strategy", "")
+        if flag not in ["clear-all", "overwrite", "preserve"]:
+            flag = "preserve"
+        return flag
+    
+    @importer_resolution_strategy.setter
+    def importer_resolution_strategy(self, value):
+        """Sets strategy flag for resolving conflicts during binding import.
+
+        :param value Flag indicating resolution strategy ("clear-all", "overwrite", or "preserve")
+        """
+        self._data["importer_resolution_strategy"] = value
+        self.save()
