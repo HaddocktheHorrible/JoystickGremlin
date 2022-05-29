@@ -1885,15 +1885,23 @@ class BindingImportUi(common.BaseDialogUi):
         # reload module now, in case user has changed module since initial selection
         self._importer_module.__loader__.exec_module(self._importer_module)
         self._show_help(self._importer_module)
+        
+        # prompt for file to import; return if none given
+        fname, _ = QtWidgets.QFileDialog.getOpenFileName(
+            None,
+            "Open file for import",
+            gremlin.util.userprofile_path(),
+            self._import_filter
+            )
+        if fname == "":
+            return
 
         # try to run the importer
         # display full trace for non-gremlin errors
-        template_path = self._profile.settings.importer_template_path
         try:
-            template_fid = open(template_path, 'r')
-            outfile = self._importer_module.main(
-                self._profile.get_all_bound_vjoys(),
-                template_fid.readlines(),
+            fid = open(fname, 'r')
+            bindings = self._importer_module.main(
+                fid.readlines(),
                 self._profile.settings.importer_arg_string
                 )
         except gremlin.error.GremlinError as e:
@@ -1907,30 +1915,13 @@ class BindingImportUi(common.BaseDialogUi):
             gremlin.util.display_error(msg)
             return
         finally:
-            template_fid.close()
-
-        # write to template in-place or prompt for new file
-        if self.config.overwrite_importer_template:
-            fname = template_path
-        else:
-            fname, _ = QtWidgets.QFileDialog.getSaveFileName(
-                None,
-                "Save As",
-                template_path,
-                self._import_filter
-                )
+            fid.close()
             
-        # try to write to file
-        if fname != "":
-            try:
-                fid = open(fname, "w")
-                fid.writelines(outfile)
-            except Exception as e:
-                msg = "Failed to write to {}!".format(fname)
-                msg += " ".join(traceback.format_exception(*sys.exc_info()))
-                gremlin.util.display_error(msg)
-            finally:
-                fid.close()
+        # apply importer bindings to profile
+        # todo: figure out how to write bindings from dict
+            # create input items for each vjoy in profile
+        # todo: figure out how to undo changes to profile if exception occurs
+        # copy profile._bound_vjoys dict?
 
     def _update_args(self, arg_string):
         """Stores importer argument string.
