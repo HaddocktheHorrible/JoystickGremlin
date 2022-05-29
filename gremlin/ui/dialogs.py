@@ -1871,16 +1871,13 @@ class BindingImportUi(common.BaseDialogUi):
             self.importer_edit.setEnabled(False)
             self.importer_remove.setEnabled(False)
             
-        # enable import button if a valid importer and template are selected
+        # enable import button if a valid importer is selected
         if self._importer_module is None:
             self.import_button.setEnabled(False)
-            self.import_button.setToolTip("Select an Importer and Config Template first!")
-        elif not os.path.isfile(self.template_field.text()):
-            self.import_button.setEnabled(False)
-            self.import_button.setToolTip("Config Template not found!")
+            self.import_button.setToolTip("Select an Importer first!")
         else:
             self.import_button.setEnabled(True)
-            self.import_button.setToolTip("Import current bindings using selected Importer")
+            self.import_button.setToolTip("Import bindings from file using selected Importer")
 
     def _run_importer(self):
         """Execute selected importer with optional args"""
