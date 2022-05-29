@@ -1603,6 +1603,13 @@ class BindingImportUi(common.BaseDialogUi):
         self._profile = profile_data
         self.setMinimumWidth(400)
         self.setWindowTitle("Binding Import")
+        
+        # define possible importer overwrite options
+        self._overwrite_options = [
+            "preserve"
+            "overwrite", 
+            "clear-all", 
+            ]
 
         # create importer dialog
         self._importer_module = None
@@ -1612,11 +1619,43 @@ class BindingImportUi(common.BaseDialogUi):
         """Creates the binding importer page."""
         self.main_layout = QtWidgets.QVBoxLayout(self)
 
-        # edit in place option
-        self.overwrite_checkbox = QtWidgets.QCheckBox(
-            "Overwrite Config Template on Import"
-        )
-        self.overwrite_checkbox.clicked.connect(self._overwrite_template)
+        # overwrite options radio dials
+        self.button_layout = QtWidgets.QVBoxLayout()
+        self.button_group_label = QtWidgets.QLabel("Import conflict resolution")
+        self.button_group = QtWidgets.QButtonGroup()
+        self.button_group.buttonClicked.connect(self._select_overwrite_option)
+        
+        clear_button = QtWidgets.QRadioButton("Clear all existing")
+        clear_button.toolTip("Remove all bindings from profile "
+                             "before import"
+                             )
+        self.button_group.addButton(
+            clear_button, 
+            self._overwrite_options.index("clear-all")
+            )
+        
+        overwrite_button = QtWidgets.QRadioButton("Overwrite conflicts")
+        overwrite_button.toolTip("Profile bindings are overwritten "
+                                 "by imported bindings with the same "
+                                 "input id"
+                                 )
+        self.button_group.addButton(
+            overwrite_button, 
+            self._overwrite_options.index("overwrite")
+            )
+        
+        preserve_button = QtWidgets.QRadioButton("Preserve existing")
+        preserve_button.toolTip("Imported bindings are assigned new "
+                                "input ids if binding assignments "
+                                "conflict with profile bindings"
+                                )
+        self.button_group.addButton(
+            preserve_button, 
+            self._overwrite_options.index("preserve")
+            )
+        
+        self.button_layout.addWidget(self.button_group_label)
+        self.button_layout.addWidget(self.button_group)
 
         # importer dropdown list
         self.importer_layout = QtWidgets.QHBoxLayout()
@@ -1654,7 +1693,7 @@ class BindingImportUi(common.BaseDialogUi):
         self.args_layout.addWidget(self.args_label)
         self.args_layout.addWidget(self.args_field)
 
-        self.main_layout.addWidget(self.overwrite_checkbox)
+        self.main_layout.addWidget(self.button_layout)
         self.main_layout.addLayout(self.importer_layout)
         self.main_layout.addLayout(self.args_layout)
         self.main_layout.addStretch()
@@ -1670,11 +1709,12 @@ class BindingImportUi(common.BaseDialogUi):
         self.import_button.clicked.connect(self._run_importer)
         self.main_layout.addWidget(self.import_button)
 
-        # pre-populate profile and config setttings, if any
+        # pre-populate profile and config settings, if any
         self.populate_importers(self._profile.settings.importer_path)
-        self.template_field.setText(self._profile.settings.importer_template_path)
         self.args_field.setText(self._profile.settings.importer_arg_string)
-        self.overwrite_checkbox.setChecked(self.config.overwrite_importer_template)
+        self.button_group.button(
+            self._overwrite_options.index(self._overwrite)
+            ).clicked(True)
 
     def closeEvent(self, event):
         """Closes the calibration window.
@@ -1901,12 +1941,25 @@ class BindingImportUi(common.BaseDialogUi):
         """
         self._profile.settings.importer_arg_string = arg_string
 
-    def _overwrite_template(self, clicked):
-        """Stores config importer template overwrite preference.
+    def _select_overwrite_option(self, clicked_id):
+        """Stores import conflict resolution option to config.
 
-        :param clicked whether or not the checkbox is ticked
+        :param clicked_id Button id for selected option
         """
-        self.config.overwrite_importer_template = clicked
+        self.config.overwrite_on_import = self._overwrite_options[clicked_id]
+        
+    @property
+    def _overwrite(self):
+        """Return current overwrite option
+        
+        Defaults to first option from list if invalid flag given
+        
+        :return option string stored in config
+        """
+        flag = self.config.overwrite_on_import
+        if flag not in self._overwrite_options:
+            flag = self._overwrite_options[0]
+        return flag
 
     @property
     def _import_filter(self):
