@@ -647,21 +647,18 @@ class Configuration:
         self.save()
         
     @property
-    def importer_resolution_strategy(self):
-        """Returns strategy flag for resolving conflicts during binding import.
+    def overwrite_on_import(self):
+        """Returns importer overwrite flag for resolving conflicts during binding import.
         
-        :return stored flag or "preserve" if invalid definition
+        :return stored flag or empty if none defined
         """
-        flag = self._data.get("importer_resolution_strategy", "")
-        if flag not in ["clear-all", "overwrite", "preserve"]:
-            flag = "preserve"
-        return flag
+        return self._data.get("overwrite_on_import", "")
     
-    @importer_resolution_strategy.setter
-    def importer_resolution_strategy(self, value):
-        """Sets strategy flag for resolving conflicts during binding import.
+    @overwrite_on_import.setter
+    def overwrite_on_import(self, value):
+        """Sets importer overwrite flag for resolving conflicts during binding import.
 
-        :param value Flag indicating resolution strategy ("clear-all", "overwrite", or "preserve")
+        :param value Flag indicating resolution strategy
         """
-        self._data["importer_resolution_strategy"] = value
+        self._data["overwrite_on_import"] = value
         self.save()
