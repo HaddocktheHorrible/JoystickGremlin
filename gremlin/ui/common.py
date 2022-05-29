@@ -735,6 +735,9 @@ class VJoySelector(AbstractInputSelector):
         """
         self.invalid_ids = invalid_ids
         super().__init__(change_cb, valid_types, parent)
+        
+        # must call _create_binding_dropdown after 
+        # widget super().__init__() due to pyQt initialization
         self.profile = profile
         self.binding_dropdown = None # use a single list of all possible bindings
         self._create_binding_dropdown()
