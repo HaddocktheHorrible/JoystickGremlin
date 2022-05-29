@@ -1850,13 +1850,14 @@ class BindingImportUi(common.BaseDialogUi):
             self.importer_help.setText(getdoc(module))
         else:
             self.importer_help.setText(
-                "Importers print VJoy bindings to a game-specific configuration file. "
+                "Importers populate bindings from file to the current profile. "
                 "Optional arguments may be passed to the importer function above. "
                 "Help for the selected importer is listed in this dialog once an "
-                "importer is selected."
+                "importer is selected. The profile is only modified if no errors "
+                "occur during import."
                 )
         if not self.importer_help.text().strip():
-            self.importer_help.setText("Select importer has no docstring.")
+            self.importer_help.setText("Selected importer has no docstring.")
             
     def _update_button_status(self):
         """Enable/disable buttons based on current importer selection"""
