@@ -1725,7 +1725,7 @@ class Profile:
             bound_vjoy.description = input_item.description
     
     def update_bound_vjoy_registry(self, input_item):
-        """Updates Profile bindings to from passed input item
+        """Updates Profile bindings from passed input item
 
             Handles binding clears, new binding addition (across all modes), 
             and overlapping binding conflict resolution.
@@ -1752,6 +1752,12 @@ class Profile:
         if new_binding:
             self._bound_vjoys[bound_vjoy.input_type][new_binding] = bound_vjoy
             
+    def update_bound_vjoy_registry_from_dict(self, binding_dict, conflict_option="preserve"):
+        """Update Profile bindings from binding list"""
+        
+        # todo: store copy of current bindings -- restore if error
+        # 
+            
     def sync_device_bindings(self, device_guid=None):
         """Update bindings for given device
         
@@ -1767,7 +1773,8 @@ class Profile:
     def clear_device_bindings(self, vjoy_id=None):
         """Remove bindings for given device
         
-        Used to clear vjoy-as-input devices from list
+        Used to clear vjoy-as-input devices from list. If no vjoy_id passed,
+        then all devices are cleared.
         
         :param device_guid device to match for updates on just one device
         """
@@ -1776,7 +1783,7 @@ class Profile:
         for input_type in self._bound_vjoys:
             bindings_to_remove = list()
             for binding,bound_vjoy in self._bound_vjoys[input_type].items():
-                if vjoy_id == bound_vjoy.vjoy_id:
+                if vjoy_id is None or vjoy_id == bound_vjoy.vjoy_id:
                     bound_vjoy.binding = ""
                     bound_vjoy.description = ""
                     bindings_to_remove.append(binding)
