@@ -1752,11 +1752,62 @@ class Profile:
         if new_binding:
             self._bound_vjoys[bound_vjoy.input_type][new_binding] = bound_vjoy
             
-    def update_bound_vjoy_registry_from_dict(self, binding_dict, conflict_option="preserve"):
-        """Update Profile bindings from binding list"""
+    def update_bound_vjoy_registry_from_dict(self, bindings):
+        """Update Profile bindings from binding dictionary
         
-        # todo: store copy of current bindings -- restore if error
-        # 
+        bindings must be of the format:
+            bindings[input_type][binding]["description"]
+            bindings[input_type][binding]["device_id"]  (optional)
+            bindings[input_type][binding]["input_id"]   (optional)
+        
+        :param bindings Dictionary of binding entries
+        """
+        
+        for input_type in self._get_empty_binding_list():
+            
+            # add binding entries with assigned vjoy_id & input_id targets
+            assigned_bindings = [b for b,v in bindings[input_type].items() if all(k in v.keys() for k in ["device_id", "input_id"])]
+            for binding in assigned_bindings:
+                vjoy_id = bindings[binding]["device_id"]
+                input_id = bindings[binding]["input_id"]
+                description = bindings[binding]["description"]
+                
+                # check if vjoy assignment is valid; bind to first unbound if invalid
+                vjoy_guid = joystick_handling.guid_from_vjoy_id(vjoy_id)
+                if vjoy_guid is None:
+                    logging.getLogger("system").warning((
+                        "Could not bind to VJoy {:d}! "
+                        "Replacing assigned VJoy & input with first unbound."
+                        ).format(vjoy_id)
+                    )
+                    bindings[input_type][binding] = {"description":description}
+                    continue
+                dev = self.vjoy_devices[vjoy_guid]
+                
+                # check if input_id is valid; bind to first unbound if invalid
+                mode = next(iter(dev.modes.values()))
+                if not mode.has_data(input_type, input_id):
+                    logging.getLogger("system").warning((
+                        "VJoy {:d} has no {:d}! "
+                        "Replacing assigned VJoy & input with first unbound."
+                        ).format(vjoy_id, input_to_ui_string(input_type, input_id))
+                    )
+                    bindings[input_type][binding] = {"description":description}
+                    continue
+                
+                # update item; add to profile 
+                item = mode.get_data(input_type, input_id)
+                item.binding = binding
+                item.description = description
+                self.update_bound_vjoy_registry(BoundVJoy(item, self))
+                
+            # add binding entries with unassigned vjoy_id & input_id targets
+            unassigned_bindings = [b for b,v in bindings[input_type].items() if not all(k in v.keys() for k in ["device_id", "input_id"])]
+            for binding in unassigned_bindings:
+                vjoy_id = bindings[binding]["device_id"]
+                input_id = bindings[binding]["input_id"]
+                description = bindings[binding]["description"]
+                # todo: get first unbound item
             
     def sync_device_bindings(self, device_guid=None):
         """Update bindings for given device
