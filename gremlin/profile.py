@@ -1334,7 +1334,7 @@ class Profile:
         self.plugins = []
         self.settings = Settings(self)
         self.parent = None
-        self._bound_vjoys = self._get_empty_binding_list()
+        self._bound_vjoys = self._empty_input_type_dict()
 
     def initialize_joystick_device(self, device, modes):
         """Ensures a joystick is properly initialized in the profile.
@@ -1436,12 +1436,7 @@ class Profile:
                 vjoy[vid]["hat"].append(i+1)
 
         # List all input types
-        all_input_types = [
-            InputType.JoystickAxis,
-            InputType.JoystickButton,
-            InputType.JoystickHat,
-            InputType.Keyboard
-        ]
+        all_input_types = self._empty_input_type_dict().keys()
 
         # Create a list of all used remap actions
         remap_actions = []
@@ -1502,7 +1497,7 @@ class Profile:
         # Gather list of unique bound vjoy items from all vjoy devices
         # BoundVJoy uniqueness and existence across modes ensured by BoundVJoy class init
         # looping over modes gets coverage in case a binding is defined in just one mode
-        bindings = self._get_empty_binding_list()
+        bindings = self._empty_input_type_dict()
         for dev in self.vjoy_devices.values():
             for mode in dev.modes.values():
                 for input_type in bindings:
@@ -1763,7 +1758,7 @@ class Profile:
         :param bindings Dictionary of binding entries
         """
         
-        for input_type in self._get_empty_binding_list():
+        for input_type in self._empty_input_type_dict():
             
             # add binding entries with assigned vjoy_id & input_id targets
             assigned_bindings = [b for b,v in bindings[input_type].items() if all(k in v.keys() for k in ["device_id", "input_id"])]
@@ -1850,12 +1845,7 @@ class Profile:
         is_empty &= len(self.merge_axes) == 0
 
         # Enumerate all input devices
-        all_input_types = [
-            InputType.JoystickAxis,
-            InputType.JoystickButton,
-            InputType.JoystickHat,
-            InputType.Keyboard
-        ]
+        all_input_types = self._empty_input_type_dict().keys()
 
         # Process all devices
         for dev in self.devices.values():
@@ -1873,11 +1863,11 @@ class Profile:
 
         return is_empty
 
-    def _get_empty_binding_list(self):
-        """Returns list with all supported input types
+    def _empty_input_type_dict(self):
+        """Returns empty dictionary with all supported input types
 
         Returns:
-            _type_: _description_
+            _type_: _empty_dict_
         """
         return {
             InputType.JoystickAxis: {},
