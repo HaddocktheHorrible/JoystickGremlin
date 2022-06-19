@@ -1411,6 +1411,23 @@ class Profile:
                 if mode.inherit is None:
                     root_modes.append(mode_name)
         return list(set(root_modes))
+    
+    def list_all_vjoy_inputs(self):
+        """Returns a list of all available vjoy inputs for the given profile.
+
+        :return dictionary of inputs for each input vjoy device and input type 
+        """
+        vjoy_inputs = {}
+        for entry in joystick_handling.vjoy_devices():
+            vjoy_id = entry.vjoy_id
+            if vjoy_id in self.settings.vjoy_as_input.keys() and self.settings.vjoy_as_input[vjoy_id]:
+                continue # skip vjoy_as_input entries
+            vjoy_inputs[vjoy_id] = self._empty_input_type_dict()
+            dev = self.vjoy_devices[entry.device_guid]  # get vjoy Device profile
+            mode = dev.modes[next(iter(dev.modes))]     # get any mode -- all have same available inputs
+            for input_type in vjoy_inputs[vjoy_id]:
+                vjoy_inputs[vjoy_id][input_type] = mode.all_input_items_of_type(input_type)
+        return vjoy_inputs
 
     def list_unused_vjoy_inputs(self):
         """Returns a list of unused vjoy inputs for the given profile.
