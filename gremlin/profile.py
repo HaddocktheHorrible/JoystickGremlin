@@ -1428,6 +1428,26 @@ class Profile:
             for input_type in vjoy_inputs[vjoy_id]:
                 vjoy_inputs[vjoy_id][input_type] = mode.all_input_items_of_type(input_type)
         return vjoy_inputs
+    
+    def list_unbound_vjoy_inputs(self):
+        """Returns a list of all vjoy inputs without a set binding for the given profile.
+
+        :return dictionary of inputs for each input vjoy device and input type
+        """
+        unbound_vjoy_inputs = {}
+        all_vjoy_inputs = self.list_all_vjoy_inputs()
+        for vjoy_id,vjoy_inputs in all_vjoy_inputs.items():
+            unbound_input_types = {}
+            for input_type,input_items in vjoy_inputs.items():
+                unbound_items = []
+                for item in input_items:
+                    if not item.binding:
+                        unbound_items.append(item)
+                if unbound_items:
+                    unbound_input_types[input_type] = unbound_items
+            if unbound_input_types:
+                unbound_vjoy_inputs[vjoy_id] = unbound_input_types
+        return unbound_vjoy_inputs
 
     def list_unused_vjoy_inputs(self):
         """Returns a list of unused vjoy inputs for the given profile.
