@@ -1497,8 +1497,8 @@ class Profile:
         unused_vjoy_inputs = self.list_unused_vjoy_inputs()
         
         for vjoy_id in set(unbound_vjoy_inputs.keys()).intersection(unused_vjoy_inputs.keys()):
-            unbound_items = unbound_vjoy_inputs[vjoy_id][input_type].values()
-            unused_items = unused_vjoy_inputs[vjoy_id][input_type].values()
+            unbound_items = unbound_vjoy_inputs[vjoy_id].get(input_type, [])
+            unused_items = unused_vjoy_inputs[vjoy_id].get(input_type, [])
             free_vjoy_inputs = set(unbound_items).intersection(unused_items)
             if not free_vjoy_inputs:
                 continue # skip this vjoy if no free inputs of type
