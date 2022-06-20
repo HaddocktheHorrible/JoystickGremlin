@@ -1794,10 +1794,8 @@ class Profile:
         
         :param bindings Dictionary of binding entries
         """
-        
+        # register bindings with assigned vjoy_id & input_id targets
         for input_type in self._empty_input_type_dict():
-            
-            # add binding entries with assigned vjoy_id & input_id targets
             assigned_bindings = [b for b,v in bindings[input_type].items() if all(k in v.keys() for k in ["device_id", "input_id"])]
             for binding in assigned_bindings:
                 vjoy_id = bindings[binding]["device_id"]
@@ -1832,14 +1830,30 @@ class Profile:
                 item.binding = binding
                 item.description = description
                 self.update_bound_vjoy_registry(BoundVJoy(item, self))
+               
+        # compile all unbound vjoy inputs to a dict by input_type
+        all_unbound_vjoy_inputs = self.list_unbound_vjoy_inputs()
+        available_items = self._empty_input_type_dict()
+        for vjoy in all_unbound_vjoy_inputs.values():
+            for input_type,input_items in vjoy.items():
+                available_items[input_type].append(input_items)
                 
-            # add binding entries with unassigned vjoy_id & input_id targets
+        # add remaining (unassigned) bindings to unbound vjoy inputs
+        for input_type,input_items in available_items.items():
             unassigned_bindings = [b for b,v in bindings[input_type].items() if not all(k in v.keys() for k in ["device_id", "input_id"])]
             for binding in unassigned_bindings:
-                vjoy_id = bindings[binding]["device_id"]
-                input_id = bindings[binding]["input_id"]
-                description = bindings[binding]["description"]
-                # todo: get first unbound item
+                try:
+                    item = input_items.pop(0)
+                    item.binding = binding
+                    item.description = bindings[binding]["description"]
+                    self.update_bound_vjoy_registry(BoundVJoy(item, self))
+                except IndexError:
+                    logging.getLogger("system").error((
+                        "Cannot assign binding '{:s}'! "
+                        "Not enough unbound VJoy inputs of type '{:s}'. "
+                        "Skipping..."
+                        ).format(binding, input_type.to_string)
+                    )
             
     def sync_device_bindings(self, device_guid=None):
         """Update bindings for given device
