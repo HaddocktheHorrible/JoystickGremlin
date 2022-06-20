@@ -1469,14 +1469,22 @@ class Profile:
         # Remove all valid remap actions from the list of available inputs
         vjoy_inputs = self.list_all_vjoy_inputs()
         for act in remap_actions:
+            
+            # remove remapped input from list
             if act.vjoy_input_id in [0, None] \
-                    or act.vjoy_device_id in [0, None] \
+                    or act.vjoy_device_id not in vjoy_inputs.keys() \
                     or act.input_type not in vjoy_inputs[act.vjoy_device_id].keys() \
                     or act.vjoy_input_id not in vjoy_inputs[act.vjoy_device_id][act.input_type]:
                 continue
             input_ids_to_search = [item.input_id for item in vjoy_inputs[act.vjoy_device_id][act.input_type]]
             used_item_index = input_ids_to_search.index(act.vjoy_input_id)
             del vjoy_inputs[act.vjoy_device_id][act.input_type][used_item_index]
+            
+            # delete any now-empty parents
+            if not vjoy_inputs[act.vjoy_device_id][act.input_type]:
+                del vjoy_inputs[act.vjoy_device_id][act.input_type]
+            if not vjoy_inputs[act.vjoy_device_id]:
+                del vjoy_inputs[act.vjoy_device_id]
             
         return vjoy_inputs
     
