@@ -1452,56 +1452,31 @@ class Profile:
     def list_unused_vjoy_inputs(self):
         """Returns a list of unused vjoy inputs for the given profile.
 
-        :return dictionary of unused inputs for each input type
+        :return dictionary of unused InputItems for each input vjoy device and input type
         """
-        vjoy_devices = joystick_handling.vjoy_devices()
-
-        # Create list of all inputs provided by the vjoy output devices
-        vjoy = {}
-        for entry in vjoy_devices:
-            vid = entry.vjoy_id
-            if vid in self.settings.vjoy_as_input.keys() and self.settings.vjoy_as_input[vid]:
-                continue # skip vjoy_as_input entries
-            vjoy[vid] = {"axis": [], "button": [], "hat": []}
-            for i in range(entry.axis_count):
-                vjoy[vid]["axis"].append(
-                    entry.axis_map[i].axis_index
-                )
-            for i in range(entry.button_count):
-                vjoy[vid]["button"].append(i+1)
-            for i in range(entry.hat_count):
-                vjoy[vid]["hat"].append(i+1)
-
-        # List all input types
-        all_input_types = self._empty_input_type_dict().keys()
-
         # Create a list of all used remap actions
         remap_actions = []
         for dev in self.devices.values():
             for mode in dev.modes.values():
-                for input_type in all_input_types:
-                    for item in mode.all_input_items_of_type(input_type):
-                        for container in item.containers:
-                            remap_actions.extend(
-                                extract_remap_actions(container.action_sets)
-                            )
+                for item in mode.all_input_items():
+                    for container in item.containers:
+                        remap_actions.extend(
+                            extract_remap_actions(container.action_sets)
+                        )
 
-        # Remove all remap actions from the list of available inputs
+        # Remove all valid remap actions from the list of available inputs
+        vjoy_inputs = self.list_all_vjoy_inputs()
         for act in remap_actions:
-            # Skip remap actions that have invalid configuration
-            if act.input_type is None:
-                continue
-
-            type_name = InputType.to_string(act.input_type)
             if act.vjoy_input_id in [0, None] \
                     or act.vjoy_device_id in [0, None] \
-                    or act.vjoy_input_id not in vjoy[act.vjoy_device_id][type_name]:
+                    or act.input_type not in vjoy_inputs[act.vjoy_device_id].keys() \
+                    or act.vjoy_input_id not in vjoy_inputs[act.vjoy_device_id][act.input_type]:
                 continue
-
-            idx = vjoy[act.vjoy_device_id][type_name].index(act.vjoy_input_id)
-            del vjoy[act.vjoy_device_id][type_name][idx]
-
-        return vjoy
+            input_ids_to_search = [item.input_id for item in vjoy_inputs[act.vjoy_device_id][act.input_type]]
+            used_item_index = input_ids_to_search.index(act.vjoy_input_id)
+            del vjoy_inputs[act.vjoy_device_id][act.input_type][used_item_index]
+            
+        return vjoy_inputs
     
     def get_first_free_vjoy_input_of_type(self, input_type):
         """Returns the first unused and unbound vjoy input of the given type
