@@ -807,7 +807,7 @@ class VJoySelector(AbstractInputSelector):
         binding_choices.sort() # sort for alphabetical order
         self.binding_dropdown.addItems(binding_choices)
         self.main_layout.addWidget(self.binding_dropdown)
-        self.binding_dropdown.activated.connect(self._update_binding)
+        self.binding_dropdown.currentTextChanged.connect(self._update_binding)
         
     def _update_binding(self):
         # get selection based on binding
