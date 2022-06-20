@@ -1422,11 +1422,13 @@ class Profile:
             vjoy_id = entry.vjoy_id
             if vjoy_id in self.settings.vjoy_as_input.keys() and self.settings.vjoy_as_input[vjoy_id]:
                 continue # skip vjoy_as_input entries
-            vjoy_inputs[vjoy_id] = self._empty_input_type_dict()
+            vjoy_inputs[vjoy_id] = {}
             dev = self.vjoy_devices[entry.device_guid]  # get vjoy Device profile
             mode = dev.modes[next(iter(dev.modes))]     # get any mode -- all have same available inputs
-            for input_type in vjoy_inputs[vjoy_id]:
-                vjoy_inputs[vjoy_id][input_type] = mode.all_input_items_of_type(input_type)
+            for input_type in self._empty_input_type_dict():
+                items = mode.all_input_items_of_type(input_type)
+                if items: # only add input_type to dict if items exist to add
+                    vjoy_inputs[vjoy_id][input_type] = items
         return vjoy_inputs
     
     def list_unbound_vjoy_inputs(self):
