@@ -1502,6 +1502,28 @@ class Profile:
             del vjoy[act.vjoy_device_id][type_name][idx]
 
         return vjoy
+    
+    def get_first_free_vjoy_input_of_type(self, input_type):
+        """Returns the first unused and unbound vjoy input of the given type
+
+        :return InputItem corresponding to first unused and unbound vjoy input of correct type
+        """
+        unbound_vjoy_inputs = self.list_unbound_vjoy_inputs()
+        unused_vjoy_inputs = self.list_unused_vjoy_inputs()
+        
+        for vjoy_id in set(unbound_vjoy_inputs.keys()).intersection(unused_vjoy_inputs.keys()):
+            unbound_items = unbound_vjoy_inputs[vjoy_id][input_type].values()
+            unused_items = unused_vjoy_inputs[vjoy_id][input_type].values()
+            free_vjoy_inputs = set(unbound_items).intersection(unused_items)
+            if not free_vjoy_inputs:
+                continue # skip this vjoy if no free inputs of type
+            input_item = free_vjoy_inputs[0]
+            return {
+                "device_id": vjoy_id,
+                "input_id": input_item.input_id,
+                "input_type": input_item.input_type
+                }
+        return None # return None if no item found
 
     def from_xml(self, fname):
         """Parses the global XML document into the profile data structure.

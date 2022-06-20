@@ -21,6 +21,7 @@ import threading
 from PyQt5 import QtWidgets, QtCore, QtGui
 
 import gremlin
+import logging
 
 
 class ContainerViewTypes(enum.Enum):
@@ -816,37 +817,17 @@ class VJoySelector(AbstractInputSelector):
         if binding: 
             selection = self.profile.get_vjoy_from_binding(binding)
         else:
-            selection = self._get_first_unbound_unused_vjoy_input()
+            for input_type in self.valid_types:
+                selection = self.profile.get_first_free_vjoy_input_of_type(input_type)
+                if selection is not None:
+                    break
+            if selection is None:
+                logging.getLogger("system").warning("No unused and unbound VJoy Inputs to select! Ignoring...")
+                selection = self.get_selection()
             
         # update ui and pass to callback function from selection
         self.set_selection(selection["input_type"],selection["device_id"],selection["input_id"])
         self.chage_cb(selection)
-        
-    def _get_first_unbound_unused_vjoy_input(self):
-        # return first unused vjoy without a defined binding
-        
-        # define name map for accessing types from profile.list_unused_vjoy_inputs()
-        type_to_name_map = {
-                gremlin.common.InputType.JoystickAxis: "axis",
-                gremlin.common.InputType.JoystickButton: "button",
-                gremlin.common.InputType.JoystickHat: "hat",
-                gremlin.common.InputType.Keyboard: "button",
-            }
-        
-        # find first unused vjoy input w/o a binding
-        unused_vjoy_list = self.profile.list_unused_vjoy_inputs()
-        for device_id in unused_vjoy_list:
-            dev_idx = self._device_id_registry.index(device_id)
-            device_guid = self.device_list[dev_idx].device_guid
-            for input_type in self.valid_types:
-                input_name = type_to_name_map[input_type]
-                for input_id in unused_vjoy_list[device_id][input_name]:
-                    if not self.profile.get_binding_from_vjoy(device_guid, input_id, input_type):
-                        return {
-                            "device_id": device_id,
-                            "input_id": input_id,
-                            "input_type": input_type
-                        }
         
     def _sync_binding(self,input_id,input_type):
         # sync binding selection based on current vjoy device/input
