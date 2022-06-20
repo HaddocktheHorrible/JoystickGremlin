@@ -1413,9 +1413,9 @@ class Profile:
         return list(set(root_modes))
     
     def list_all_vjoy_inputs(self):
-        """Returns a list of all available vjoy inputs for the given profile.
+        """Returns all possible vjoy inputs for the given profile.
 
-        :return dictionary of inputs for each input vjoy device and input type 
+        :return dictionary of InputItems for each input vjoy device and input type 
         """
         vjoy_inputs = {}
         for entry in joystick_handling.vjoy_devices():
@@ -1430,9 +1430,9 @@ class Profile:
         return vjoy_inputs
     
     def list_unbound_vjoy_inputs(self):
-        """Returns a list of all vjoy inputs without a set binding for the given profile.
+        """Returns all vjoy inputs without a set binding for the given profile.
 
-        :return dictionary of inputs for each input vjoy device and input type
+        :return dictionary of unbound InputItems for each input vjoy device and input type
         """
         unbound_vjoy_inputs = {}
         all_vjoy_inputs = self.list_all_vjoy_inputs()
