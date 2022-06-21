@@ -1699,12 +1699,15 @@ class Profile:
         # finding binding in list of all bound vjoys
         # we can do this because all drop-downs are already filtered for correct type
         # and binding list only allows one binding per vjoy output
-        bound_vjoy = self.get_all_bound_vjoys()[binding]
-        return {
-                "device_id": bound_vjoy.vjoy_id,
-                "input_id": bound_vjoy.input_id,
-                "input_type": bound_vjoy.input_type
-                }
+        bound_vjoy = self.get_all_bound_vjoys().get(binding, None)
+        if bound_vjoy is None:
+            return None
+        else:
+            return {
+                    "device_id": bound_vjoy.vjoy_id,
+                    "input_id": bound_vjoy.input_id,
+                    "input_type": bound_vjoy.input_type
+                    }
 
     def get_bindings_of_type(self, input_type):
         """Returns binding entries for given input type
