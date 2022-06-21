@@ -368,7 +368,7 @@ class GremlinUi(QtWidgets.QMainWindow):
         main_profile = device_profile.parent
         for input_type in input_types:
             for entry in mode.config[input_type].values():
-                unused_inputs = main_profile.list_unused_vjoy_inputs()
+                unused_inputs = main_profile.get_unused_vjoy_inputs()
 
                 container = container_plugins.repository["basic"](entry)
                 action = action_plugins.repository["remap"](container)

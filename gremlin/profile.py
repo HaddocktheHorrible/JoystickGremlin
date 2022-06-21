@@ -1412,7 +1412,7 @@ class Profile:
                     root_modes.append(mode_name)
         return list(set(root_modes))
     
-    def list_all_vjoy_inputs(self):
+    def get_all_vjoy_inputs(self):
         """Returns all possible vjoy inputs for the given profile.
 
         :return dictionary of InputItems for each input vjoy device and input type 
@@ -1431,13 +1431,13 @@ class Profile:
                     vjoy_inputs[vjoy_id][input_type] = items
         return vjoy_inputs
     
-    def list_unbound_vjoy_inputs(self):
+    def get_unbound_vjoy_inputs(self):
         """Returns all vjoy inputs without a set binding for the given profile.
 
         :return dictionary of unbound InputItems for each input vjoy device and input type
         """
         unbound_vjoy_inputs = {}
-        all_vjoy_inputs = self.list_all_vjoy_inputs()
+        all_vjoy_inputs = self.get_all_vjoy_inputs()
         for vjoy_id,vjoy_inputs in all_vjoy_inputs.items():
             unbound_input_types = {}
             for input_type,input_items in vjoy_inputs.items():
@@ -1451,7 +1451,7 @@ class Profile:
                 unbound_vjoy_inputs[vjoy_id] = unbound_input_types
         return unbound_vjoy_inputs
 
-    def list_unused_vjoy_inputs(self):
+    def get_unused_vjoy_inputs(self):
         """Returns a list of unused vjoy inputs for the given profile.
 
         :return dictionary of unused InputItems for each input vjoy device and input type
@@ -1467,7 +1467,7 @@ class Profile:
                         )
 
         # Remove all valid remap actions from the list of available inputs
-        vjoy_inputs = self.list_all_vjoy_inputs()
+        vjoy_inputs = self.get_all_vjoy_inputs()
         for act in remap_actions:
             
             # remove remapped input from list
@@ -1493,8 +1493,8 @@ class Profile:
 
         :return InputItem corresponding to first unused and unbound vjoy input of correct type
         """
-        unbound_vjoy_inputs = self.list_unbound_vjoy_inputs()
-        unused_vjoy_inputs = self.list_unused_vjoy_inputs()
+        unbound_vjoy_inputs = self.get_unbound_vjoy_inputs()
+        unused_vjoy_inputs = self.get_unused_vjoy_inputs()
         
         for vjoy_id in set(unbound_vjoy_inputs.keys()).intersection(unused_vjoy_inputs.keys()):
             unbound_items = unbound_vjoy_inputs[vjoy_id].get(input_type, [])
@@ -1839,7 +1839,7 @@ class Profile:
                 self.update_bound_vjoy_registry(BoundVJoy(item, self))
                
         # compile all unbound vjoy inputs to a dict by input_type
-        all_unbound_vjoy_inputs = self.list_unbound_vjoy_inputs()
+        all_unbound_vjoy_inputs = self.get_unbound_vjoy_inputs()
         available_items = self._empty_input_type_dict()
         for vjoy in all_unbound_vjoy_inputs.values():
             for input_type,input_items in vjoy.items():

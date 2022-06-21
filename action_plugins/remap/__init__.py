@@ -136,7 +136,7 @@ class RemapWidget(gremlin.ui.input_item.AbstractActionWidget):
 
         # If no valid input item is selected get the next unused one
         if self.action_data.vjoy_input_id in [0, None]:
-            unused_inputs = self._get_profile_root().list_unused_vjoy_inputs()
+            unused_inputs = self._get_profile_root().get_unused_vjoy_inputs()
 
             # if no vjoy given, try to get first with unused input
             # if none, get first available input device with req. input type
@@ -146,7 +146,7 @@ class RemapWidget(gremlin.ui.input_item.AbstractActionWidget):
                             and unused_inputs[dev_id][input_type]:
                         vjoy_id = dev_id
                         break
-                all_inputs = self._get_profile_root().list_all_vjoy_inputs()
+                all_inputs = self._get_profile_root().get_all_vjoy_inputs()
                 for dev_id in sorted(all_inputs.keys()):
                     if input_type in all_inputs[dev_id].keys():
                         vjoy_id = dev_id
