@@ -119,9 +119,9 @@ class RemapWidget(gremlin.ui.input_item.AbstractActionWidget):
         binding = self.action_data.binding
         
         # Get the appropriate vjoy device identifier
-        vjoy_dev_id = 0
+        vjoy_id = 0
         if self.action_data.vjoy_device_id not in [0, None]:
-            vjoy_dev_id = self.action_data.vjoy_device_id
+            vjoy_id = self.action_data.vjoy_device_id
 
         # Get the input type which can change depending on the container used
         input_type = self.action_data.input_type
@@ -136,27 +136,40 @@ class RemapWidget(gremlin.ui.input_item.AbstractActionWidget):
 
         # If no valid input item is selected get the next unused one
         if self.action_data.vjoy_input_id in [0, None]:
-            free_inputs = self._get_profile_root().list_unused_vjoy_inputs()
+            unused_inputs = self._get_profile_root().list_unused_vjoy_inputs()
 
-            input_name = self.type_to_name_map[input_type].lower()
-            input_type = self.name_to_type_map[input_name.capitalize()]
-            if vjoy_dev_id == 0:
-                vjoy_dev_id = sorted(free_inputs.keys())[0]
-            input_list = free_inputs[vjoy_dev_id][input_name]
-            # If we have an unused item use it, otherwise use the first one
-            if len(input_list) > 0:
-                vjoy_input_id = input_list[0]
+            # if no vjoy given, try to get first with unused input
+            # if none, get first available input device with req. input type
+            if vjoy_id == 0:
+                for dev_id in sorted(unused_inputs.keys()):
+                    if input_type in unused_inputs[dev_id].keys() \
+                            and unused_inputs[dev_id][input_type]:
+                        vjoy_id = dev_id
+                        break
+                all_inputs = self._get_profile_root().list_all_vjoy_inputs()
+                for dev_id in sorted(all_inputs.keys()):
+                    if input_type in all_inputs[dev_id].keys():
+                        vjoy_id = dev_id
+                        break
+            
+            # try to pick first unused input for vjoy, else pick the first
+            if vjoy_id in unused_inputs.keys():
+                input_id = unused_inputs[vjoy_id][input_type][0].input_id
             else:
-                vjoy_input_id = 1
-        # If a valid input item is present use it
-        else:
-            vjoy_input_id = self.action_data.vjoy_input_id
+                logging.getLogger("system").warning((
+                    "No unused inputs of correct type available for VJoy {:d}! "
+                    "Defaulting to first input."
+                    ).format(vjoy_id)
+                )
+                input_id = 1
+        else: # If a valid input item is present use it
+            input_id = self.action_data.vjoy_input_id
 
         try:
             self.vjoy_selector.set_selection(
                 input_type,
-                vjoy_dev_id,
-                vjoy_input_id,
+                vjoy_id,
+                input_id,
                 binding
             )
 
