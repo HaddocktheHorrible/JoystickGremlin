@@ -1336,6 +1336,154 @@ class Profile:
         self.parent = None
         self._bound_vjoys = self._empty_input_type_dict()
 
+    def from_xml(self, fname):
+        """Parses the global XML document into the profile data structure.
+
+        :param fname the path to the XML file to parse
+        """
+        # Check for outdated profile structure and warn user / convert
+        profile_converter = ProfileConverter()
+        profile_was_updated = False
+        if not profile_converter.is_current(fname):
+            logging.getLogger("system").warning("Outdated profile, converting")
+            profile_converter.convert_profile(fname)
+            profile_was_updated = True
+
+        tree = ElementTree.parse(fname)
+        root = tree.getroot()
+
+        # Parse each device into separate DeviceConfiguration objects
+        for child in root.iter("device"):
+            device = Device(self)
+            device.from_xml(child)
+            self.devices[device.device_guid] = device
+
+        # Parse each vjoy device into separate DeviceConfiguration objects
+        for child in root.iter("vjoy-device"):
+            device = Device(self)
+            device.from_xml(child)
+            self.vjoy_devices[device.device_guid] = device
+            
+        # Gather list of unique bound vjoy items from all vjoy devices
+        # BoundVJoy uniqueness and existence across modes ensured by BoundVJoy class init
+        # looping over modes gets coverage in case a binding is defined in just one mode
+        bindings = self._empty_input_type_dict()
+        for dev in self.vjoy_devices.values():
+            for mode in dev.modes.values():
+                for input_type in bindings:
+                    for item in mode.all_input_items_of_type(input_type):
+                        if item.binding:
+                            bindings[input_type][item.binding] = BoundVJoy(item, self)
+        self._bound_vjoys = bindings
+        
+        # Ensure that the profile contains an entry for every existing
+        # device even if it was not part of the loaded XML and
+        # replicate the modes present in the profile. This adds both entries
+        # for physical and virtual joysticks.
+        devices = joystick_handling.joystick_devices()
+        for dev in devices:
+            add_device = False
+            if dev.is_virtual and dev.device_guid not in self.vjoy_devices:
+                add_device = True
+            elif not dev.is_virtual and dev.device_guid not in self.devices:
+                add_device = True
+
+            if add_device:
+                new_device = Device(self)
+                new_device.name = dev.name
+                if dev.is_virtual:
+                    new_device.type = DeviceType.VJoy
+                    new_device.device_guid = dev.device_guid
+                    self.vjoy_devices[dev.device_guid] = new_device
+                else:
+                    new_device.type = DeviceType.Joystick
+                    new_device.device_guid = dev.device_guid
+                    self.devices[dev.device_guid] = new_device
+
+                # Create required modes
+                for mode in mode_list(new_device):
+                    if mode not in new_device.modes:
+                        new_device.modes[mode] = Mode(new_device)
+                        new_device.modes[mode].name = mode
+
+        # Parse merge axis entries
+        for child in root.iter("merge-axis"):
+            self.merge_axes.append(self._parse_merge_axis(child))
+
+        # Parse settings entries
+        self.settings.from_xml(root.find("settings"))
+
+        # Parse plugin entries
+        for child in root.findall("plugins/plugin"):
+            plugin = Plugin(self)
+            plugin.from_xml(child)
+            self.plugins.append(plugin)
+
+        return profile_was_updated
+
+    def to_xml(self, fname):
+        """Generates XML code corresponding to this profile.
+
+        :param fname name of the file to save the XML to
+        """
+        # Generate XML document
+        root = ElementTree.Element("profile")
+        root.set("version", str(ProfileConverter.current_version))
+
+        # Device settings
+        devices = ElementTree.Element("devices")
+        device_list = sorted(
+            self.devices.values(),
+            key=lambda x: str(x.device_guid)
+        )
+        for device in device_list:
+            devices.append(device.to_xml())
+        root.append(devices)
+
+        # VJoy settings
+        vjoy_devices = ElementTree.Element("vjoy-devices")
+        for device in self.vjoy_devices.values():
+            vjoy_devices.append(device.to_xml())
+        root.append(vjoy_devices)
+
+        # Merge axis data
+        for entry in self.merge_axes:
+            node = ElementTree.Element("merge-axis")
+            node.set("mode", safe_format(entry["mode"], str))
+            node.set("operation", safe_format(
+                MergeAxisOperation.to_string(entry["operation"]),
+                str
+            ))
+            for tag in ["vjoy"]:
+                sub_node = ElementTree.Element(tag)
+                sub_node.set(
+                    "vjoy-id",
+                    safe_format(entry[tag]["vjoy_id"], int)
+                )
+                sub_node.set("axis-id", safe_format(entry[tag]["axis_id"], int))
+                node.append(sub_node)
+            for tag in ["lower", "upper"]:
+                sub_node = ElementTree.Element(tag)
+                sub_node.set("device-guid", write_guid(entry[tag]["device_guid"]))
+                sub_node.set("axis-id", safe_format(entry[tag]["axis_id"], int))
+                node.append(sub_node)
+            root.append(node)
+
+        # Settings data
+        root.append(self.settings.to_xml())
+
+        # User plugins
+        plugins = ElementTree.Element("plugins")
+        for plugin in self.plugins:
+            plugins.append(plugin.to_xml())
+        root.append(plugins)
+
+        # Serialize XML document
+        ugly_xml = ElementTree.tostring(root, encoding="utf-8")
+        dom_xml = minidom.parseString(ugly_xml)
+        with codecs.open(fname, "w", "utf-8-sig") as out:
+            out.write(dom_xml.toprettyxml(indent="    "))
+
     def initialize_joystick_device(self, device, modes):
         """Ensures a joystick is properly initialized in the profile.
 
@@ -1509,154 +1657,6 @@ class Profile:
                 "input_type": input_item.input_type
                 }
         return None # return None if no item found
-
-    def from_xml(self, fname):
-        """Parses the global XML document into the profile data structure.
-
-        :param fname the path to the XML file to parse
-        """
-        # Check for outdated profile structure and warn user / convert
-        profile_converter = ProfileConverter()
-        profile_was_updated = False
-        if not profile_converter.is_current(fname):
-            logging.getLogger("system").warning("Outdated profile, converting")
-            profile_converter.convert_profile(fname)
-            profile_was_updated = True
-
-        tree = ElementTree.parse(fname)
-        root = tree.getroot()
-
-        # Parse each device into separate DeviceConfiguration objects
-        for child in root.iter("device"):
-            device = Device(self)
-            device.from_xml(child)
-            self.devices[device.device_guid] = device
-
-        # Parse each vjoy device into separate DeviceConfiguration objects
-        for child in root.iter("vjoy-device"):
-            device = Device(self)
-            device.from_xml(child)
-            self.vjoy_devices[device.device_guid] = device
-            
-        # Gather list of unique bound vjoy items from all vjoy devices
-        # BoundVJoy uniqueness and existence across modes ensured by BoundVJoy class init
-        # looping over modes gets coverage in case a binding is defined in just one mode
-        bindings = self._empty_input_type_dict()
-        for dev in self.vjoy_devices.values():
-            for mode in dev.modes.values():
-                for input_type in bindings:
-                    for item in mode.all_input_items_of_type(input_type):
-                        if item.binding:
-                            bindings[input_type][item.binding] = BoundVJoy(item, self)
-        self._bound_vjoys = bindings
-        
-        # Ensure that the profile contains an entry for every existing
-        # device even if it was not part of the loaded XML and
-        # replicate the modes present in the profile. This adds both entries
-        # for physical and virtual joysticks.
-        devices = joystick_handling.joystick_devices()
-        for dev in devices:
-            add_device = False
-            if dev.is_virtual and dev.device_guid not in self.vjoy_devices:
-                add_device = True
-            elif not dev.is_virtual and dev.device_guid not in self.devices:
-                add_device = True
-
-            if add_device:
-                new_device = Device(self)
-                new_device.name = dev.name
-                if dev.is_virtual:
-                    new_device.type = DeviceType.VJoy
-                    new_device.device_guid = dev.device_guid
-                    self.vjoy_devices[dev.device_guid] = new_device
-                else:
-                    new_device.type = DeviceType.Joystick
-                    new_device.device_guid = dev.device_guid
-                    self.devices[dev.device_guid] = new_device
-
-                # Create required modes
-                for mode in mode_list(new_device):
-                    if mode not in new_device.modes:
-                        new_device.modes[mode] = Mode(new_device)
-                        new_device.modes[mode].name = mode
-
-        # Parse merge axis entries
-        for child in root.iter("merge-axis"):
-            self.merge_axes.append(self._parse_merge_axis(child))
-
-        # Parse settings entries
-        self.settings.from_xml(root.find("settings"))
-
-        # Parse plugin entries
-        for child in root.findall("plugins/plugin"):
-            plugin = Plugin(self)
-            plugin.from_xml(child)
-            self.plugins.append(plugin)
-
-        return profile_was_updated
-
-    def to_xml(self, fname):
-        """Generates XML code corresponding to this profile.
-
-        :param fname name of the file to save the XML to
-        """
-        # Generate XML document
-        root = ElementTree.Element("profile")
-        root.set("version", str(ProfileConverter.current_version))
-
-        # Device settings
-        devices = ElementTree.Element("devices")
-        device_list = sorted(
-            self.devices.values(),
-            key=lambda x: str(x.device_guid)
-        )
-        for device in device_list:
-            devices.append(device.to_xml())
-        root.append(devices)
-
-        # VJoy settings
-        vjoy_devices = ElementTree.Element("vjoy-devices")
-        for device in self.vjoy_devices.values():
-            vjoy_devices.append(device.to_xml())
-        root.append(vjoy_devices)
-
-        # Merge axis data
-        for entry in self.merge_axes:
-            node = ElementTree.Element("merge-axis")
-            node.set("mode", safe_format(entry["mode"], str))
-            node.set("operation", safe_format(
-                MergeAxisOperation.to_string(entry["operation"]),
-                str
-            ))
-            for tag in ["vjoy"]:
-                sub_node = ElementTree.Element(tag)
-                sub_node.set(
-                    "vjoy-id",
-                    safe_format(entry[tag]["vjoy_id"], int)
-                )
-                sub_node.set("axis-id", safe_format(entry[tag]["axis_id"], int))
-                node.append(sub_node)
-            for tag in ["lower", "upper"]:
-                sub_node = ElementTree.Element(tag)
-                sub_node.set("device-guid", write_guid(entry[tag]["device_guid"]))
-                sub_node.set("axis-id", safe_format(entry[tag]["axis_id"], int))
-                node.append(sub_node)
-            root.append(node)
-
-        # Settings data
-        root.append(self.settings.to_xml())
-
-        # User plugins
-        plugins = ElementTree.Element("plugins")
-        for plugin in self.plugins:
-            plugins.append(plugin.to_xml())
-        root.append(plugins)
-
-        # Serialize XML document
-        ugly_xml = ElementTree.tostring(root, encoding="utf-8")
-        dom_xml = minidom.parseString(ugly_xml)
-        with codecs.open(fname, "w", "utf-8-sig") as out:
-            out.write(dom_xml.toprettyxml(indent="    "))
 
     def get_device_modes(self, device_guid, device_type, device_name=None):
         """Returns the modes associated with the given device.
@@ -2076,6 +2076,36 @@ class Device:
         self.modes = {}
         self.type = None
 
+    def from_xml(self, node):
+        """Populates this device based on the xml data.
+
+        :param node the xml node to parse to populate this device
+        """
+        self.name = node.get("name")
+        self.label = safe_read(node, "label", default_value=self.name)
+        self.type = DeviceType.to_enum(safe_read(node, "type", str))
+        self.device_guid = parse_guid(node.get("device-guid"))
+
+        for child in node:
+            mode = Mode(self)
+            mode.from_xml(child)
+            self.modes[mode.name] = mode
+
+    def to_xml(self):
+        """Returns a XML node representing this device's contents.
+
+        :return xml node of this device's contents
+        """
+        node_tag = "device" if self.type != DeviceType.VJoy else "vjoy-device"
+        node = ElementTree.Element(node_tag)
+        node.set("name", safe_format(self.name, str))
+        node.set("label", safe_format(self.label, str))
+        node.set("device-guid", write_guid(self.device_guid))
+        node.set("type", DeviceType.to_string(self.type))
+        for mode in sorted(self.modes.values(), key=lambda x: x.name):
+            node.append(mode.to_xml())
+        return node
+
     def ensure_mode_exists(self, mode_name, device=None):
         """Ensures that a specified mode exists, creating it if needed.
 
@@ -2109,37 +2139,6 @@ class Device:
                 mode.get_data(InputType.JoystickButton, idx)
             for idx in range(1, device.hat_count + 1):
                 mode.get_data(InputType.JoystickHat, idx)
-
-    def from_xml(self, node):
-        """Populates this device based on the xml data.
-
-        :param node the xml node to parse to populate this device
-        """
-        self.name = node.get("name")
-        self.label = safe_read(node, "label", default_value=self.name)
-        self.type = DeviceType.to_enum(safe_read(node, "type", str))
-        self.device_guid = parse_guid(node.get("device-guid"))
-
-        for child in node:
-            mode = Mode(self)
-            mode.from_xml(child)
-            self.modes[mode.name] = mode
-
-    def to_xml(self):
-        """Returns a XML node representing this device's contents.
-
-        :return xml node of this device's contents
-        """
-        node_tag = "device" if self.type != DeviceType.VJoy else "vjoy-device"
-        node = ElementTree.Element(node_tag)
-        node.set("name", safe_format(self.name, str))
-        node.set("label", safe_format(self.label, str))
-        node.set("device-guid", write_guid(self.device_guid))
-        node.set("type", DeviceType.to_string(self.type))
-        for mode in sorted(self.modes.values(), key=lambda x: x.name):
-            node.append(mode.to_xml())
-        return node
-
 
 class Mode:
 
