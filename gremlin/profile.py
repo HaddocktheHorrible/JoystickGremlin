@@ -1839,8 +1839,9 @@ class Profile:
                 item = mode.get_data(input_type, input_id)
                 item.binding = binding
                 item.description = description
-                self.update_bound_vjoy_registry(BoundVJoy(item, self))
+                self.update_bound_vjoy_registry(item)
                
+        # todo: preemptively remove bindings to add from profile if they are of different input type
         # compile all unbound vjoy inputs to a dict by input_type
         all_unbound_vjoy_inputs = self.get_unbound_vjoy_inputs()
         available_items = self._empty_input_type_dict()
@@ -1856,7 +1857,7 @@ class Profile:
                     item = input_items.pop(0)
                     item.binding = binding
                     item.description = bindings[binding]["description"]
-                    self.update_bound_vjoy_registry(BoundVJoy(item, self))
+                    self.update_bound_vjoy_registry(item)
                 except IndexError:
                     logging.getLogger("system").error((
                         "Cannot assign binding '{:s}'! "
