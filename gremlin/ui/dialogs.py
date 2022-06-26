@@ -1917,11 +1917,48 @@ class BindingImportUi(common.BaseDialogUi):
         finally:
             fid.close()
             
-        # apply importer bindings to profile
-        # todo: figure out how to write bindings from dict
-            # create input items for each vjoy in profile
-        # todo: figure out how to undo changes to profile if exception occurs
-        # copy profile._bound_vjoys dict?
+        # try to apply imported bindings
+        try:
+            bindings = self._validate_import(bindings)
+            if self._overwrite == "clear-all":
+                self._profile.clear_device_bindings()
+            count = self._profile.update_bound_vjoy_registry_from_dict(bindings)
+        except gremlin.error.GremlinError as e:
+            msg = "Failed to import!\n"
+            msg += e.value
+            gremlin.util.display_error(msg)
+            return
+        
+        # report if errors or warnings were encountered
+        nErrors = count["error"]
+        nWarnings = count["warning"]
+        if nErrors > 0:
+            gremlin.util.display_error((
+                "At least one binding could not be assigned! "
+                "\tNumber of missing bindings: \t{:d}\n"
+                "\tNumber of reassigned bindings: \t{:d}\n"
+                "An additional VJoy device may be needed. "
+                "Review system log for details."
+                ).format(nErrors, nWarnings))
+        elif nWarnings > 0:
+            gremlin.util.display_error((
+                "At least one binding was reassigned! "
+                "\tNumber of missing bindings: \t{:d}\n"
+                "\tNumber of reassigned bindings: \t{:d}\n"
+                "Available VJoy axes/buttons may not match expected. "
+                "Review system log for details."
+                ).format(nErrors, nWarnings))
+    
+    def _validate_import(self, bindings):
+        """Check for errors in binding import"""
+        
+        # todo: convert input_type string to valid type
+        # todo: check device_id is int
+        # todo: check input_id is int
+        # todo: check description is string
+        # todo: check binding is string
+        
+        return -1
 
     def _update_args(self, arg_string):
         """Stores importer argument string.
