@@ -1803,7 +1803,13 @@ class Profile:
             bindings[input_type][binding]["input_id"]   (optional)
         
         :param bindings Dictionary of binding entries
+        :return dict with number of warnings and errors thrown
         """
+        # track number of warnings and errors
+        count = {}
+        count["warning"] = 0
+        count["error"] = 0
+        
         # register bindings with assigned vjoy_id & input_id targets
         for input_type in self._empty_input_type_dict():
             assigned_bindings = [b for b,v in bindings[input_type].items() if all(k in v.keys() for k in ["device_id", "input_id"])]
@@ -1820,6 +1826,7 @@ class Profile:
                         "Replacing assigned VJoy & input with first unbound."
                         ).format(vjoy_id)
                     )
+                    count["warning"] += 1
                     bindings[input_type][binding] = {"description":description}
                     continue
                 dev = self.vjoy_devices[vjoy_guid]
@@ -1832,6 +1839,7 @@ class Profile:
                         "Replacing assigned VJoy & input with first unbound."
                         ).format(vjoy_id, input_to_ui_string(input_type, input_id))
                     )
+                    count["warning"] += 1
                     bindings[input_type][binding] = {"description":description}
                     continue
                 
@@ -1867,6 +1875,8 @@ class Profile:
                         "Skipping..."
                         ).format(binding, input_type.to_string)
                     )
+                    count["error"] += 1
+        return count
             
     def sync_device_bindings(self, device_guid=None):
         """Update bindings for given device
