@@ -1853,6 +1853,8 @@ class Profile:
         for input_type,input_items in available_items.items():
             unassigned_bindings = [b for b,v in bindings[input_type].items() if not all(k in v.keys() for k in ["device_id", "input_id"])]
             for binding in unassigned_bindings:
+                if self.get_vjoy_from_binding(binding) is not None:
+                    continue # skip entries that are already bound
                 try:
                     item = input_items.pop(0)
                     item.binding = binding
