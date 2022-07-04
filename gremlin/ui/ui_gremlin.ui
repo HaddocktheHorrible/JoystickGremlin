@@ -74,6 +74,7 @@
     <addaction name="actionCalibration"/>
     <addaction name="actionInputViewer"/>
     <addaction name="separator"/>
+    <addaction name="actionImportBindings"/>
     <addaction name="actionExportBindings"/>
     <addaction name="actionPDFCheatsheet"/>
     <addaction name="separator"/>
@@ -247,6 +248,11 @@
   <action name="actionExportBindings">
    <property name="text">
     <string>&amp;Export Bindings</string>
+   </property>
+  </action>
+  <action name="actionImportBindings">
+   <property name="text">
+    <string>&amp;Import Bindings</string>
    </property>
   </action>
  </widget>
