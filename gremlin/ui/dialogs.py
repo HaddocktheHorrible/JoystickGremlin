@@ -1615,7 +1615,7 @@ class BindingImportUi(common.BaseDialogUi):
         
         # define possible importer overwrite options
         self._overwrite_options = [
-            "preserve"
+            "preserve",
             "overwrite", 
             "clear-all", 
             ]
@@ -1635,16 +1635,16 @@ class BindingImportUi(common.BaseDialogUi):
         self.button_group.buttonClicked.connect(self._select_overwrite_option)
         
         clear_button = QtWidgets.QRadioButton("Clear all existing")
-        clear_button.toolTip("Remove all bindings from profile "
+        clear_button.setToolTip(("Remove all bindings from profile "
                              "before import"
-                             )
+                             ))
         self.button_group.addButton(
             clear_button, 
             self._overwrite_options.index("clear-all")
             )
         
         overwrite_button = QtWidgets.QRadioButton("Overwrite conflicts")
-        overwrite_button.toolTip("Profile bindings are overwritten "
+        overwrite_button.setToolTip("Profile bindings are overwritten "
                                  "by imported bindings with the same "
                                  "input id"
                                  )
@@ -1654,7 +1654,7 @@ class BindingImportUi(common.BaseDialogUi):
             )
         
         preserve_button = QtWidgets.QRadioButton("Preserve existing")
-        preserve_button.toolTip("Imported bindings are assigned new "
+        preserve_button.setToolTip("Imported bindings are assigned new "
                                 "input ids if binding assignments "
                                 "conflict with profile bindings"
                                 )
@@ -1664,7 +1664,9 @@ class BindingImportUi(common.BaseDialogUi):
             )
         
         self.button_layout.addWidget(self.button_group_label)
-        self.button_layout.addWidget(self.button_group)
+        self.button_layout.addWidget(overwrite_button)
+        self.button_layout.addWidget(preserve_button)
+        self.button_layout.addWidget(clear_button)
 
         # importer dropdown list
         self.importer_layout = QtWidgets.QHBoxLayout()
@@ -1702,7 +1704,7 @@ class BindingImportUi(common.BaseDialogUi):
         self.args_layout.addWidget(self.args_label)
         self.args_layout.addWidget(self.args_field)
 
-        self.main_layout.addWidget(self.button_layout)
+        self.main_layout.addLayout(self.button_layout)
         self.main_layout.addLayout(self.importer_layout)
         self.main_layout.addLayout(self.args_layout)
         self.main_layout.addStretch()
