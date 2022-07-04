@@ -1897,7 +1897,7 @@ class BindingImportUi(common.BaseDialogUi):
             return
 
         # try to run the importer
-        # display full trace for non-gremlin errors
+        # display full trace for non-gremlin importer errors
         try:
             fid = open(fname, 'r')
             bindings = self._importer_module.main(
@@ -1905,60 +1905,100 @@ class BindingImportUi(common.BaseDialogUi):
                 self._profile.settings.importer_arg_string
                 )
         except gremlin.error.GremlinError as e:
-            msg = "Failed to import!\n"
+            msg = "Failed to import! Profile has not been modified.\n"
             msg += e.value
             gremlin.util.display_error(msg)
             return
         except Exception as e:
-            msg = "Failed to import!\n"
+            msg = "Failed to import! Profile has not been modified.\n"
             msg += " ".join(traceback.format_exception(*sys.exc_info()))
             gremlin.util.display_error(msg)
             return
         finally:
             fid.close()
             
-        # try to apply imported bindings
+        # validate imported bindings
         try:
             bindings = self._validate_import(bindings)
-            if self._overwrite == "clear-all":
-                self._profile.clear_device_bindings()
-            count = self._profile.update_bound_vjoy_registry_from_dict(bindings)
         except gremlin.error.GremlinError as e:
-            msg = "Failed to import!\n"
+            msg = "Failed to import! Profile has not been modified.\n"
             msg += e.value
             gremlin.util.display_error(msg)
             return
         
+        # apply imported bindings to profile
         # report if errors or warnings were encountered
+        if self._overwrite == "clear-all":
+            self._profile.clear_device_bindings()
+        count = self._profile.update_bound_vjoy_registry_from_dict(bindings)
         nErrors = count["error"]
         nWarnings = count["warning"]
         if nErrors > 0:
             gremlin.util.display_error((
-                "At least one binding could not be assigned! "
+                "At least one binding could not be assigned!\n"
                 "\tNumber of missing bindings: \t{:d}\n"
                 "\tNumber of reassigned bindings: \t{:d}\n"
                 "An additional VJoy device may be needed. "
-                "Review system log for details."
+                "Review system log for details before saving profile changes."
                 ).format(nErrors, nWarnings))
         elif nWarnings > 0:
             gremlin.util.display_error((
-                "At least one binding was reassigned! "
+                "At least one binding was reassigned!\n"
                 "\tNumber of missing bindings: \t{:d}\n"
                 "\tNumber of reassigned bindings: \t{:d}\n"
                 "Available VJoy axes/buttons may not match expected. "
-                "Review system log for details."
+                "Review system log for details before saving profile changes."
                 ).format(nErrors, nWarnings))
     
     def _validate_import(self, bindings):
         """Check for errors in binding import"""
         
-        # todo: convert input_type string to valid type
-        # todo: check device_id is int
-        # todo: check input_id is int
-        # todo: check description is string
-        # todo: check binding is string
-        
-        return -1
+        valid = {}
+        for input_name, assignments in bindings.items():
+            
+            # check input_name is valid input_type
+            try:
+                input_type = gremlin.common.InputType.to_enum(input_name)
+            except gremlin.error.GremlinError:
+                msg = (("Importer returned unknown input type {}."
+                       ).format(input_name))
+                raise gremlin.error.ImporterError(msg)
+            valid[input_type] = {}
+            
+            # validate each binding assignment
+            for binding, assignment in assignments.items():
+                try:
+                    binding = str(binding)
+                    description = str(assignment["description"])
+                    device_id = int(assignment["device_id"])
+                    input_id = int(assignment["input_id"])
+                except KeyError:
+                    msg = (("Missing expected assignment attribute. "
+                            "Check 'description', 'device_id', and 'input_id' "
+                            "are present dictionary keys for '{:s}'").format(binding))
+                    raise gremlin.error.ImporterError(msg)
+                except ValueError:
+                    msg = (("Could not cast 'device_id' and/or 'input_id' values to int. "
+                            "Check assignments for '{:s}'").format(binding))
+                    raise gremlin.error.ImporterError(msg)
+                valid[input_type][binding] = {}
+                valid[input_type][binding]["description"] = description
+                if self._overwrite != "preserve" and device_id and input_id:
+                    valid[input_type][binding]["device_id"] = device_id
+                    valid[input_type][binding]["input_id"] = input_id
+                if input_id and not device_id:
+                    logging.getLogger("system").warning((
+                        "No target VJoy device specified for '{:s}'! "
+                        "Replacing assigned VJoy and input id with first unbound."
+                        ).format(binding)
+                    )
+                if device_id and not input_id:
+                    logging.getLogger("system").warning((
+                        "No target input id specified for '{:s}'! "
+                        "Replacing assigned VJoy and input id with first unbound."
+                        ).format(binding)
+                    )
+        return valid
 
     def _update_args(self, arg_string):
         """Stores importer argument string.
