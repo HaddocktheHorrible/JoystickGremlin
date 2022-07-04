@@ -2062,7 +2062,7 @@ class BoundVJoy:
             warn_str = "Duplicate binding found for '{}'! Cleared binding and description from {}: {} in mode '{}'"\
                         .format(item.binding, vjoy_name, input_name, item.get_mode().name)
             item.clear_binding()
-            logging.getLogger("system").warning(warn_str)
+            logging.getLogger("system").info(warn_str)
             
         # set binding for all equal items that were not correctly bound
         # log warning for all overwritten items
@@ -2072,7 +2072,7 @@ class BoundVJoy:
                 input_name = input_to_ui_string(item.input_type, item.input_id)
                 warn_str = "Existing binding overwritten for {}: {} in mode '{}'! Binding changed from '{}' to '{}'"\
                             .format(vjoy_name, input_name, item.get_mode().name, item.binding, self.binding)
-                logging.getLogger("system").warning(warn_str)
+                logging.getLogger("system").info(warn_str)
             item.binding = self.binding
             item.description = self.description
     

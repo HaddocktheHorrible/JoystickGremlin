@@ -1484,6 +1484,10 @@ class BindingExportUi(common.BaseDialogUi):
         template_path = self._profile.settings.exporter_template_path
         try:
             template_fid = open(template_path, 'r')
+            logging.getLogger("system").debug((
+                "Template '{:s}' found! Preparing binding export with '{:s}'..."
+                ).format(template_path, self._exporter_module.__file__)
+            )
             outfile = self._exporter_module.main(
                 self._profile.get_all_bound_vjoys(),
                 template_fid.readlines(),
@@ -1517,7 +1521,12 @@ class BindingExportUi(common.BaseDialogUi):
         if fname != "":
             try:
                 fid = open(fname, "w")
+                logging.getLogger("system").debug((
+                    "Attempting to write bindings to '{:s}'..."
+                    ).format(fname)
+                )
                 fid.writelines(outfile)
+                logging.getLogger("system").debug("Binding export complete!")
             except Exception as e:
                 msg = "Failed to write to {}!".format(fname)
                 msg += " ".join(traceback.format_exception(*sys.exc_info()))
@@ -1900,6 +1909,10 @@ class BindingImportUi(common.BaseDialogUi):
         # display full trace for non-gremlin importer errors
         try:
             fid = open(fname, 'r')
+            logging.getLogger("system").debug((
+                "File '{:s}' found! Attempting to import bindings with '{:s}'..."
+                ).format(fname, self._importer_module.__file__)
+            )
             bindings = self._importer_module.main(
                 fid.readlines(),
                 self._profile.settings.importer_arg_string
@@ -1919,6 +1932,7 @@ class BindingImportUi(common.BaseDialogUi):
             
         # validate imported bindings
         try:
+            logging.getLogger("system").debug("Validating imported bindings...")
             bindings = self._validate_import(bindings)
         except gremlin.error.GremlinError as e:
             msg = "Failed to import! Profile has not been modified.\n"
@@ -1929,11 +1943,14 @@ class BindingImportUi(common.BaseDialogUi):
         # apply imported bindings to profile
         # report if errors or warnings were encountered
         if self._overwrite == "clear-all":
+            logging.getLogger("system").debug("Cleaning existing bindings as requested...")
             self._profile.clear_device_bindings()
+        logging.getLogger("system").debug("Applying bindings to profile...")
         count = self._profile.update_bound_vjoy_registry_from_dict(bindings)
         nErrors = count["error"]
         nWarnings = count["warning"]
         if nErrors > 0:
+            logging.getLogger("system").debug("Binding import finished with errors!")
             gremlin.util.display_error((
                 "At least one binding could not be assigned!\n"
                 "\tNumber of missing bindings: \t{:d}\n"
@@ -1942,6 +1959,7 @@ class BindingImportUi(common.BaseDialogUi):
                 "Review system log for details before saving profile changes."
                 ).format(nErrors, nWarnings))
         elif nWarnings > 0:
+            logging.getLogger("system").debug("Binding import finished with warnings!")
             gremlin.util.display_error((
                 "At least one binding was reassigned!\n"
                 "\tNumber of missing bindings: \t{:d}\n"
@@ -1949,6 +1967,8 @@ class BindingImportUi(common.BaseDialogUi):
                 "Available VJoy axes/buttons may not match expected. "
                 "Review system log for details before saving profile changes."
                 ).format(nErrors, nWarnings))
+        else:
+            logging.getLogger("system").debug("Binding import finished successfully!")
     
     def _validate_import(self, bindings):
         """Check for errors in binding import"""
