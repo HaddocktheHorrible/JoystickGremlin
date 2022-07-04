@@ -1623,12 +1623,14 @@ class Profile:
             # remove remapped input from list
             if act.vjoy_input_id in [0, None] \
                     or act.vjoy_device_id not in vjoy_inputs.keys() \
-                    or act.input_type not in vjoy_inputs[act.vjoy_device_id].keys() \
-                    or act.vjoy_input_id not in vjoy_inputs[act.vjoy_device_id][act.input_type]:
+                    or act.input_type not in vjoy_inputs[act.vjoy_device_id].keys():
                 continue
             input_ids_to_search = [item.input_id for item in vjoy_inputs[act.vjoy_device_id][act.input_type]]
-            used_item_index = input_ids_to_search.index(act.vjoy_input_id)
-            del vjoy_inputs[act.vjoy_device_id][act.input_type][used_item_index]
+            try:
+                used_item_index = input_ids_to_search.index(act.vjoy_input_id)
+                del vjoy_inputs[act.vjoy_device_id][act.input_type][used_item_index]
+            except ValueError:
+                continue
             
             # delete any now-empty parents
             if not vjoy_inputs[act.vjoy_device_id][act.input_type]:
