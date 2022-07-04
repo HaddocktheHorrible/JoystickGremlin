@@ -1823,7 +1823,7 @@ class Profile:
                 if vjoy_guid is None:
                     logging.getLogger("system").warning((
                         "Could not bind to VJoy {:d}! "
-                        "Replacing assigned VJoy & input with first unbound."
+                        "Replacing assigned VJoy and input id with first unbound."
                         ).format(vjoy_id)
                     )
                     count["warning"] += 1
@@ -1836,7 +1836,7 @@ class Profile:
                 if not mode.has_data(input_type, input_id):
                     logging.getLogger("system").warning((
                         "VJoy {:d} has no {:s}! "
-                        "Replacing assigned VJoy & input with first unbound."
+                        "Replacing assigned VJoy and input id with first unbound."
                         ).format(vjoy_id, input_to_ui_string(input_type, input_id))
                     )
                     count["warning"] += 1
