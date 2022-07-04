@@ -1201,6 +1201,8 @@ class Settings:
         self.vjoy_initial_values = {}
         self.startup_mode = None
         self.default_delay = 0.05
+        self.importer_path = ""
+        self.importer_arg_string = ""
         self.exporter_path = ""
         self.exporter_arg_string = ""
         self.exporter_template_path = ""
