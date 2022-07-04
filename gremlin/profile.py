@@ -1835,7 +1835,7 @@ class Profile:
                 mode = next(iter(dev.modes.values()))
                 if not mode.has_data(input_type, input_id):
                     logging.getLogger("system").warning((
-                        "VJoy {:d} has no {:d}! "
+                        "VJoy {:d} has no {:s}! "
                         "Replacing assigned VJoy & input with first unbound."
                         ).format(vjoy_id, input_to_ui_string(input_type, input_id))
                     )
