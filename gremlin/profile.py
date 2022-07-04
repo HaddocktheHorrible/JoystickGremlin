@@ -2280,8 +2280,7 @@ class Mode:
                 
     def all_input_items_of_type(self, input_type):
         assert(input_type in self.config)
-        return self.config[input_type].values()
-
+        return list(self.config[input_type].values())
 
 class InputItem:
 
