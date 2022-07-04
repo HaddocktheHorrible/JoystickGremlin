@@ -139,29 +139,27 @@ class RemapWidget(gremlin.ui.input_item.AbstractActionWidget):
             unused_inputs = self._get_profile_root().get_unused_vjoy_inputs()
 
             # if no vjoy given, try to get first with unused input
-            # if none, get first available input device with req. input type
             if vjoy_id == 0:
                 for dev_id in sorted(unused_inputs.keys()):
                     if input_type in unused_inputs[dev_id].keys() \
                             and unused_inputs[dev_id][input_type]:
                         vjoy_id = dev_id
+                        input_id = unused_inputs[vjoy_id][input_type][0].input_id
                         break
+                    
+            # if none unused, get first available input device with req. input type
+            if vjoy_id == 0:
                 all_inputs = self._get_profile_root().get_all_vjoy_inputs()
                 for dev_id in sorted(all_inputs.keys()):
                     if input_type in all_inputs[dev_id].keys():
                         vjoy_id = dev_id
+                        logging.getLogger("system").warning((
+                            "No unused inputs of correct type available for VJoy {:d}! "
+                            "Defaulting to first input."
+                            ).format(vjoy_id)
+                        )
+                        input_id = 1
                         break
-            
-            # try to pick first unused input for vjoy, else pick the first
-            if vjoy_id in unused_inputs.keys():
-                input_id = unused_inputs[vjoy_id][input_type][0].input_id
-            else:
-                logging.getLogger("system").warning((
-                    "No unused inputs of correct type available for VJoy {:d}! "
-                    "Defaulting to first input."
-                    ).format(vjoy_id)
-                )
-                input_id = 1
         else: # If a valid input item is present use it
             input_id = self.action_data.vjoy_input_id
 
