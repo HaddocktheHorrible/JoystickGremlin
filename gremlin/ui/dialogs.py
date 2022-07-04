@@ -1615,9 +1615,9 @@ class BindingImportUi(common.BaseDialogUi):
         
         # define possible importer overwrite options
         self._overwrite_options = [
-            "preserve",
-            "overwrite", 
             "clear-all", 
+            "overwrite", 
+            "preserve",
             ]
 
         # create importer dialog
@@ -1632,7 +1632,7 @@ class BindingImportUi(common.BaseDialogUi):
         self.button_layout = QtWidgets.QVBoxLayout()
         self.button_group_label = QtWidgets.QLabel("Import conflict resolution")
         self.button_group = QtWidgets.QButtonGroup()
-        self.button_group.buttonClicked.connect(self._select_overwrite_option)
+        self.button_group.idClicked.connect(self._select_overwrite_option)
         
         clear_button = QtWidgets.QRadioButton("Clear all existing")
         clear_button.setToolTip(("Remove all bindings from profile "
@@ -1725,7 +1725,7 @@ class BindingImportUi(common.BaseDialogUi):
         self.args_field.setText(self._profile.settings.importer_arg_string)
         self.button_group.button(
             self._overwrite_options.index(self._overwrite)
-            ).clicked(True)
+            ).setChecked(True)
 
     def closeEvent(self, event):
         """Closes the calibration window.
