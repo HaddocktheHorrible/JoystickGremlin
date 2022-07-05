@@ -22,6 +22,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 
 import gremlin
 import logging
+import gremlin.joystick_handling
 
 
 class ContainerViewTypes(enum.Enum):
@@ -807,11 +808,19 @@ class VJoySelector(AbstractInputSelector):
         binding_choices.sort() # sort for alphabetical order
         self.binding_dropdown.addItems(binding_choices)
         self.main_layout.addWidget(self.binding_dropdown)
-        self.binding_dropdown.currentTextChanged.connect(self._update_binding)
+        self.binding_dropdown.activated.connect(self._update_binding) # only update if user selects dropdown!
         
     def _update_binding(self):
         # get selection based on binding
-        binding = self.binding_dropdown.currentText()
+        
+        # check if the binding selection actually changed
+        selection = self.get_selection()
+        device_guid = gremlin.joystick_handling.guid_from_vjoy_id(selection["device_id"])
+        input_type = selection["input_type"]
+        input_id = selection["input_id"]
+        binding = selection["binding"]
+        if binding == self.profile.get_binding_from_vjoy(device_guid, input_id, input_type):
+            return
         
         # use passed binding or first unbound and unused vjoy if binding is empty
         if binding: 
