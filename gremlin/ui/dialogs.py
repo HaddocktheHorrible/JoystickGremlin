@@ -1635,19 +1635,19 @@ class BindingImportUi(common.BaseDialogUi):
         self.button_group.idClicked.connect(self._select_overwrite_option)
         
         clear_button = QtWidgets.QRadioButton("Clear all existing")
-        clear_button.setToolTip(("Remove all bindings from profile "
-                             "before import"
-                             ))
+        clear_button.setToolTip("Remove all bindings from current profile "
+                                "before applying bindings from file"
+                                )
         self.button_group.addButton(
             clear_button, 
             self._overwrite_options.index("clear-all")
             )
         
         overwrite_button = QtWidgets.QRadioButton("Overwrite conflicts")
-        overwrite_button.setToolTip("Profile bindings are overwritten "
-                                 "by imported bindings with the same "
-                                 "input id"
-                                 )
+        overwrite_button.setToolTip("Conflicting bindings in current profile "
+                                    "are overwritten by imported bindings "
+                                    "with the same VJoy ID and input ID"
+                                    )
         self.button_group.addButton(
             overwrite_button, 
             self._overwrite_options.index("overwrite")
@@ -1655,9 +1655,9 @@ class BindingImportUi(common.BaseDialogUi):
         
         preserve_button = QtWidgets.QRadioButton("Preserve existing")
         preserve_button.setToolTip("Imported bindings are assigned new "
-                                "input ids if binding assignments "
-                                "conflict with profile bindings"
-                                )
+                                    "VJoy IDs and/or input IDs if assignments "
+                                    "conflict with current profile bindings"
+                                    )
         self.button_group.addButton(
             preserve_button, 
             self._overwrite_options.index("preserve")
