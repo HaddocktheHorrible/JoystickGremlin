@@ -43,14 +43,14 @@ _ignore_flags = []
 _vjoy_map = {}
 
 _axis_id_to_string = {
-    1: "X",
-    2: "Y",
-    3: "Z",
-    4: "RX",
-    5: "RY",
-    6: "RZ",
-    7: "U",
-    8: "V",
+    1: "AXE_X",
+    2: "AXE_Y",
+    3: "AXE_Z",
+    4: "AXE_RX",
+    5: "AXE_RY",
+    6: "AXE_RZ",
+    7: "AXE_U",
+    8: "AXE_V",
 }
 
 class AppendMapPair(argparse.Action):
