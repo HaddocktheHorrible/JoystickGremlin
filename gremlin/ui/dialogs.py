@@ -1991,14 +1991,19 @@ class BindingImportUi(common.BaseDialogUi):
             for binding, assignment in assignments.items():
                 try:
                     binding = str(binding)
+                    input_id = str(assignment["input_id"])
+                    device_id = str(assignment["device_id"])
                     description = str(assignment["description"])
-                    device_id = int(assignment["device_id"])
-                    input_id = int(assignment["input_id"])
                 except KeyError:
                     msg = (("Missing expected assignment attribute. "
                             "Check 'description', 'device_id', and 'input_id' "
                             "are present dictionary keys for '{:s}'").format(binding))
                     raise gremlin.error.ImporterError(msg)
+                try:
+                    if input_id:
+                        input_id = int(input_id)
+                    if device_id:
+                        device_id = int(device_id)
                 except ValueError:
                     msg = (("Could not cast 'device_id' and/or 'input_id' values to int. "
                             "Check assignments for '{:s}'").format(binding))
