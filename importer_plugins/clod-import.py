@@ -6,39 +6,40 @@ Optional arguments:
             VJoy ID number and associated CLoD ID string; only one
             pair may be specified per flag; multiple flags may be
             specified
+            
+    --ignore_unmapped
+            joystick devices which have not been mapped to a VJoy ID
+            will be ignored; if this is not specified; all unmapped
+            joystick devices are reassigned to the first available 
+            VJoy device
 
-    -i, --ignore_flag <ignore_flag>
-            binding assignments starting with IGNORE_FLAG are ignored; 
-            ignored bindings are not listed in the output file; 
-            multiple flags may be specified, but each flag may only 
-            consist of one character; default = '#'
+    --ignore_keyboard
+            keyboard assignments found in the config file will NOT
+            be imported; if this is not specified, all keyboard
+            assignments will be imported to vjoy buttons
                         
 Arguments example: 
 
-    To register VJoy 1 as "vJoy_Device-66210FF9", VJoy 2 as 
-    "vJoy_Device-A4E92C9", and to ignore any bindings set in Joystick 
-    Gremlin starting with '#':
+    To assign bindings from "vJoy_Device-66210FF9" to VJoy 1 and to
+    remap all remaining buttons and axes to the first available VJoy:
     
-    -m 1 66210FF9 -m 2 A4E92C9 -i #
+    -m 1 66210FF9
+    
+    To additionally ignore any keyboard buttons (i.e. those that
+    have not been assigned to a secondary device):
+    
+    -m 1 66210FF9 --ignore_keyboard
                         
-Hint: 
-
-    To find the CLoD ID for each VJoy device, manually bind one VJoy 
-    output in CLoD. CLoD will report VJoy device bindings in the format:
-    
-    "vJoy_Device-<CLoD_ID>+Key#=<binding>"
-    
-    You may then register that CLoD_ID with its corresponding VJoy_ID as 
-    described above.
-    
 """
 
+import re
 import argparse
 import gremlin.error
 
 import_filter = "CLoD Config (*.ini)"
 _comment_flags = ["[", ";"]
-_ignore_flags = []
+_ignore_keyboard = False
+_ignore_unmapped = False
 _vjoy_map = {}
 
 _axis_string_to_id = {
@@ -78,10 +79,11 @@ def main(file_lines, arg_string):
     :param arg_string Optional arguments, parsed by _parse_args
     :return Binding dictionary; to be saved to profile by Joystick Gremlin
     """
-    global _vjoy_map, _ignore_flags
+    global _vjoy_map, _ignore_keyboard, _ignore_unmapped
     
     args = _parse_args(arg_string.split())
-    _ignore_flags = args.ignore_flag
+    _ignore_keyboard = args._ignore_keyboard
+    _ignore_unmapped = args._ignore_unmapped
     for vjoy_id, clod_id in args.device_map:
         _vjoy_map["vJoy_Device-{}".format(clod_id)] = vjoy_id
     
@@ -110,11 +112,13 @@ def _parse_args(args):
                         metavar=('VJOY_ID','CLOD_ID'), 
                         help="vjoy id and associated CLoD id"
                         )
-    parser.add_argument("-i", "--ignore_flag", 
-                        nargs='?', 
-                        action='append', default=["#"],
-                        type=lambda x: x if len(x) <=1 else False, # limit flag to one char at a time
-                        help="binding assignments starting with IGNORE_FLAG are ignored"
+    parser.add_argument("--ignore_unmapped", 
+                        action='store_true',
+                        help="do not import unmapped joystick devices"
+                        )
+    parser.add_argument("--ignore_keyboard", 
+                        action='store_true',
+                        help="do not import keyboard assignments"
                         )
     valid, unknown = parser.parse_known_args(args)
     if unknown:
@@ -124,13 +128,10 @@ def _parse_args(args):
     return valid
 
 def _import(file_lines):
+    """Parse non-commented file lines into dict entries
     
-    
-    # todo: ignore non-binding lines in ini file
-    # most have one or more numbers in 'binding' field xxx=## ## ##
-    # BOB are just keywords in the "assignment" field
-    # Last Focus are keywords in the "binding" field
-    # chat window has a ":" in the "assignment" field
+    :return vjoy_item binding dictionary
+    """
     
     found = {}
     for line in file_lines:
@@ -142,30 +143,38 @@ def _clod_item2vjoy_item(clod_item):
     """Interpret clod entry to vjoy output
     
     :param clod_item CLoD .ini line to parse
+    :return vjoy_item dict entry
     """
     assignment = clod_item.split("=")[0].strip()
     binding = clod_item.split("=")[-1].strip()
     clod_dev = assignment.split("+")[0]
     clod_input = assignment.split("+")[-1]
     
+    # return empty if invalid assignment
+    if not _is_valid_assignment(assignment) \
+       or not _is_valid_binding(binding):
+        return {}
+    
     # get vjoy_id
-    # todo: make option to disable grabbing unknown vjoys
     if clod_dev in _vjoy_map:
         vjoy_id = _vjoy_map[clod_dev]
-    else:
+    elif not _ignore_unmapped:
         vjoy_id = ""
+    else:
+        return {}
     
     # get input_type and id
-    # todo: make option to disable binding key assignments
     if clod_input in _axis_string_to_id:
         input_type = "axis"
         input_id = _axis_string_to_id[clod_input]
     elif "Key" in clod_input:
         input_type = "button"
         input_id = int(clod_input.split("Key")[-1])
-    else:
+    elif not _ignore_keyboard:
         input_type = "button"
         input_id = ""
+    else:
+        return {}
         
     # assemble return
     vjoy_item = {}
@@ -176,3 +185,29 @@ def _clod_item2vjoy_item(clod_item):
         "description": ""
     }
     return vjoy_item
+
+def _is_valid_assignment(clod_assignment):
+    """Returns false if a clod keyword is found"""
+    
+    invalid_keywords = [
+        "hotkeys",
+        "difficulty",
+        "lastSingleMiss"
+    ]
+    
+    if clod_assignment in invalid_keywords:
+        return False    # non-bindable keyword -- ignore
+    elif re.search("^[-?|\d]\d+$", clod_assignment):
+        return False    # multi-digit string for LastFocus field -- ignore
+    elif re.search("^\d+:-?\d+$", clod_assignment):
+        return False    # digit:digit string for ChatWindow field -- ignore
+    else:
+        return True
+    
+def _is_valid_binding(clod_binding):
+    """Returns false if a non-keyword is found"""
+    
+    if re.sub("[-\.\s]",clod_binding).isdigit():
+        return False    # string of digits for axis sensitivities -- ignore
+    else:
+        return True
