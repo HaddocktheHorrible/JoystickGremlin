@@ -1300,6 +1300,13 @@ class Settings:
             self.exporter_path = safe_read(exporter_node, "script-path")
             self.exporter_arg_string = safe_read(exporter_node, "args")
             self.exporter_template_path = safe_read(exporter_node, "template-path")
+            
+        # Importer settings
+        self.importer_path = ""
+        self.importer_arg_string = ""
+        for importer_node in node.findall("importer"):
+            self.importer_path = safe_read(importer_node, "script-path")
+            self.importer_arg_string = safe_read(importer_node, "args")
         
 
     def get_initial_vjoy_axis_value(self, vid, aid):
