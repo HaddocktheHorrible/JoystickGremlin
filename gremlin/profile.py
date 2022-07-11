@@ -1250,6 +1250,12 @@ class Settings:
         exporter_node.set("template-path", safe_format(self.exporter_template_path, str))
         node.append(exporter_node)
         
+        # Importer settings
+        importer_node = ElementTree.Element("importer")
+        importer_node.set("script-path", safe_format(self.importer_path, str))
+        importer_node.set("args", safe_format(self.importer_arg_string, str))
+        node.append(importer_node)
+        
         return node
 
     def from_xml(self, node):
