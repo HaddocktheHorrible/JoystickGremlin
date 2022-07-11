@@ -89,10 +89,11 @@ def main(file_lines, arg_string):
     global _vjoy_map, _ignore_keyboard, _ignore_unmapped
     
     args = _parse_args(arg_string.split())
-    _ignore_keyboard = args._ignore_keyboard
-    _ignore_unmapped = args._ignore_unmapped
-    for vjoy_id, clod_id in args.device_map:
-        _vjoy_map["vJoy_Device-{}".format(clod_id)] = vjoy_id
+    _ignore_keyboard = args.ignore_keyboard
+    _ignore_unmapped = args.ignore_unmapped
+    if args.device_map is not None:
+        for vjoy_id, clod_id in args.device_map:
+            _vjoy_map["vJoy_Device-{}".format(clod_id)] = vjoy_id
     
     return _import(file_lines)
 
@@ -142,7 +143,7 @@ def _import(file_lines):
     
     found = {}
     for line in file_lines:
-        if line and line.strip()[0] not in _comment_flags:
+        if line.strip() and line.strip()[0] not in _comment_flags:
             found.update(_clod_item2vjoy_item(line))
     return found
 
@@ -221,7 +222,7 @@ def _is_valid_assignment(clod_assignment):
 def _is_valid_binding(clod_binding):
     """Returns false if a non-keyword is found"""
     
-    if re.sub("[-\.\s]",clod_binding).isdigit():
+    if re.sub("[-\.\s]","",clod_binding).isdigit():
         return False    # string of digits for axis sensitivities -- ignore
     else:
         return True
