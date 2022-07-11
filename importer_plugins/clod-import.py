@@ -1,5 +1,12 @@
 """Populates bindings from IL-2 CLoD config file to current Profile
 
+Lines starting in "[" or ";" are ignored. Config entries that do not
+relate to key bindings (such as "difficulty"; axis sensitivity and
+dead zones; and chat window settings) are ignored.
+
+Since hats are not supported by Joystick Gremlin bindings,
+"Pov" entries are bound to VJoy buttons instead.
+
 Optional arguments:
 
     -m, --device_map <VJoy_ID> <CLoD_ID>
