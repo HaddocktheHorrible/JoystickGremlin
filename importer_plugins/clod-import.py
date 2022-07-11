@@ -150,6 +150,10 @@ def _clod_item2vjoy_item(clod_item):
     clod_dev = assignment.split("+")[0]
     clod_input = assignment.split("+")[-1]
     
+    # remove "Pov" assignments in device string 
+    # i.e. "Pov270 DevXXX" returns "DevXXX"
+    clod_dev = re.sub("^Pov\d+\s","",clod_dev)
+    
     # return empty if invalid assignment
     if not _is_valid_assignment(assignment) \
        or not _is_valid_binding(binding):
@@ -170,6 +174,9 @@ def _clod_item2vjoy_item(clod_item):
     elif "Key" in clod_input:
         input_type = "button"
         input_id = int(clod_input.split("Key")[-1])
+    elif "Pov" in clod_input:
+        input_type = "button"
+        input_id = "" # bindings don't support hats, so assign to button
     elif not _ignore_keyboard:
         input_type = "button"
         input_id = ""
