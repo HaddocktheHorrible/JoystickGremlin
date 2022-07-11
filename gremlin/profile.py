@@ -1821,7 +1821,7 @@ class Profile:
         count["error"] = 0
         
         # register bindings with assigned vjoy_id & input_id targets
-        for input_type in self._empty_input_type_dict():
+        for input_type in bindings:
             assigned_bindings = [b for b,v in bindings[input_type].items() if all(k in v.keys() for k in ["device_id", "input_id"])]
             for binding in assigned_bindings:
                 vjoy_id = bindings[binding]["device_id"]
@@ -1869,6 +1869,8 @@ class Profile:
                 
         # add remaining (unassigned) bindings to unbound vjoy inputs
         for input_type,input_items in available_items.items():
+            if input_type not in bindings.keys():
+                continue
             unassigned_bindings = [b for b,v in bindings[input_type].items() if not all(k in v.keys() for k in ["device_id", "input_id"])]
             for binding in unassigned_bindings:
                 if self.get_vjoy_from_binding(binding) is not None:
