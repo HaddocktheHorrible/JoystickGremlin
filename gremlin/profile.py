@@ -1869,10 +1869,12 @@ class Profile:
         # todo: preemptively remove bindings to add from profile if they are of different input type
         # compile all unbound vjoy inputs to a dict by input_type
         all_unbound_vjoy_inputs = self.get_unbound_vjoy_inputs()
-        available_items = self._empty_input_type_dict()
+        available_items = {}
+        for input_type in self._empty_input_type_dict():
+            available_items[input_type] = []
         for vjoy in all_unbound_vjoy_inputs.values():
             for input_type,input_items in vjoy.items():
-                available_items[input_type].append(input_items)
+                available_items[input_type] += input_items
                 
         # add remaining (unassigned) bindings to unbound vjoy inputs
         for input_type,input_items in available_items.items():
@@ -1885,7 +1887,7 @@ class Profile:
                 try:
                     item = input_items.pop(0)
                     item.binding = binding
-                    item.description = bindings[binding]["description"]
+                    item.description = bindings[input_type][binding]["description"]
                     self.update_bound_vjoy_registry(item)
                 except IndexError:
                     logging.getLogger("system").error((
