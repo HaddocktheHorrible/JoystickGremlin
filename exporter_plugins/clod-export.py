@@ -84,8 +84,9 @@ def main(bound_vjoy_dict, template_file, arg_string):
     
     args = _parse_args(arg_string.split())
     _ignore_flags = args.ignore_flag
-    for vjoy_id, clod_id in args.device_map:
-        _vjoy_map[vjoy_id] = "vJoy_Device-{}".format(clod_id)
+    if args.device_map is not None:
+        for vjoy_id, clod_id in args.device_map:
+            _vjoy_map[vjoy_id] = "vJoy_Device-{}".format(clod_id)
     
     return _export(bound_vjoy_dict, template_file)
 
