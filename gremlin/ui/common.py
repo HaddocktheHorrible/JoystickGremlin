@@ -848,13 +848,12 @@ class VJoySelector(AbstractInputSelector):
             self.binding_dropdown.setCurrentText(binding)
     
     def _execute_callback(self):
-        # overwrite super to ensure binding is updated on callback
+        # overwrite super to ensure binding is updated on to match entered vjoy item before chage_cb
         selection = self.get_selection()
-        self.chage_cb(selection)
-        
-        # if a binding dropdown exists, update it to match device and input id selection
         if self.profile is not None:
             self._sync_binding(selection["input_id"],selection["input_type"])
+            selection["binding"] = self.binding_dropdown.currentText()
+        self.chage_cb(selection)
 
 class ActionSelector(QtWidgets.QWidget):
 
