@@ -1599,6 +1599,9 @@ class BindingExportUi(common.BaseDialogUi):
 class BindingImportUi(common.BaseDialogUi):
 
     """UI allowing user to import binding settings from game-specific file."""
+    
+    # Signal emitted when importer completed to trigger UI refresh
+    bindings_changed = QtCore.pyqtSignal()
 
     def __init__(self, profile_data, parent=None):
         """Creates a new importer UI instance.
@@ -1971,6 +1974,9 @@ class BindingImportUi(common.BaseDialogUi):
                 ).format(nErrors, nWarnings))
         else:
             logging.getLogger("system").debug("Binding import finished successfully!")
+            
+        # emit mode change to trigger UI update
+        self.bindings_changed.emit()
     
     def _validate_import(self, bindings):
         """Check for errors in binding import"""

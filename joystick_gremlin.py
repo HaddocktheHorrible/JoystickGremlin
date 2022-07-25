@@ -305,6 +305,9 @@ class GremlinUi(QtWidgets.QMainWindow):
     def import_bindings_dialog(self):
         """Opens the import bindings display window."""
         self.modal_windows["import_bindings"] = gremlin.ui.dialogs.BindingImportUi(self._profile)
+        self.modal_windows["import_bindings"].bindings_changed.connect(
+            self._mode_configuration_changed
+        )
         self.modal_windows["import_bindings"].show()
         self.modal_windows["import_bindings"].closed.connect(
             lambda: self._remove_modal_window("import_bindings")
