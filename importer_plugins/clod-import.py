@@ -144,7 +144,13 @@ def _import(file_lines):
     found = {}
     for line in file_lines:
         if line.strip() and line.strip()[0] not in _comment_flags:
-            found.update(_clod_item2vjoy_item(line))
+            item = _clod_item2vjoy_item(line)
+            if item:
+                input_type = next(iter(item))
+                if input_type in found.keys():
+                    found[input_type].update(item[input_type])
+                else:
+                    found.update(item)
     return found
 
 def _clod_item2vjoy_item(clod_item):
