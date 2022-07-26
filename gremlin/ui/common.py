@@ -841,6 +841,7 @@ class VJoySelector(AbstractInputSelector):
     def _sync_binding(self,input_id,input_type):
         # sync binding selection based on current vjoy device/input
         device_guid = self.device_list[self.device_dropdown.currentIndex()].device_guid
+        device_guid = gremlin.joystick_handling.guid_from_vjoy_id(selection["device_id"])
         binding = self.profile.get_binding_from_vjoy(device_guid,input_id,input_type)
         
         # only update binding if current binding doesn't match, to avoid update loop
