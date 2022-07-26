@@ -1638,7 +1638,8 @@ class BindingImportUi(common.BaseDialogUi):
         self.button_group.idClicked.connect(self._select_overwrite_option)
         
         clear_button = QtWidgets.QRadioButton("Clear all existing")
-        clear_button.setToolTip("Remove all bindings from current profile "
+        clear_button.setToolTip("Remove all bindings and binding "
+                                "descriptions from current profile "
                                 "before applying bindings from file"
                                 )
         self.button_group.addButton(

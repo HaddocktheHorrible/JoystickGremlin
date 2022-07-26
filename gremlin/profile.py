@@ -1877,26 +1877,31 @@ class Profile:
                 available_items[input_type] += input_items
                 
         # add remaining (unassigned) bindings to unbound vjoy inputs
+        # skip new bindings if they already exist and have the right type
         for input_type,input_items in available_items.items():
             if input_type not in bindings.keys():
                 continue
             unassigned_bindings = [b for b,v in bindings[input_type].items() if not all(k in v.keys() for k in ["device_id", "input_id"])]
             for binding in unassigned_bindings:
-                if self.get_vjoy_from_binding(binding) is not None:
-                    continue # skip entries that are already bound
-                try:
-                    item = input_items.pop(0)
-                    item.binding = binding
-                    item.description = bindings[input_type][binding]["description"]
-                    self.update_bound_vjoy_registry(item)
-                except IndexError:
-                    logging.getLogger("system").error((
-                        "Cannot assign binding '{:s}'! "
-                        "Not enough unbound VJoy inputs of type '{:s}'. "
-                        "Skipping..."
-                        ).format(binding, input_type.to_string)
-                    )
-                    count["error"] += 1
+                description = bindings[input_type][binding]["description"]
+                if (self.get_vjoy_from_binding(binding) is None or
+                    self.get_all_bound_vjoys()[binding].input_type != input_type):
+                    try:
+                        item = input_items.pop(0)
+                        item.binding = binding
+                        item.description = description
+                        self.update_bound_vjoy_registry(item)
+                    except IndexError:
+                        logging.getLogger("system").error((
+                            "Cannot assign binding '{:s}'! "
+                            "Not enough unbound VJoy inputs of type '{:s}'. "
+                            "Skipping..."
+                            ).format(binding, input_type.to_string)
+                        )
+                        count["error"] += 1
+                elif description: # update description of skipped bindings if a new description was given
+                    self.get_all_bound_vjoys()[binding].description = description
+                
         return count
             
     def sync_device_bindings(self, device_guid=None):
