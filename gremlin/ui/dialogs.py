@@ -1648,9 +1648,10 @@ class BindingImportUi(common.BaseDialogUi):
             )
         
         overwrite_button = QtWidgets.QRadioButton("Overwrite conflicts")
-        overwrite_button.setToolTip("Conflicting bindings in current profile "
-                                    "are overwritten by imported bindings "
-                                    "with the same VJoy ID and input ID"
+        overwrite_button.setToolTip("Imported VJoy ID and Input ID binding "
+                                    "assignments are prioritized; conflicting "
+                                    "binding assignments in current "
+                                    "profile will be cleared"
                                     )
         self.button_group.addButton(
             overwrite_button, 
@@ -1658,9 +1659,10 @@ class BindingImportUi(common.BaseDialogUi):
             )
         
         preserve_button = QtWidgets.QRadioButton("Preserve existing")
-        preserve_button.setToolTip("Imported bindings are assigned new "
-                                    "VJoy IDs and/or input IDs if assignments "
-                                    "conflict with current profile bindings"
+        preserve_button.setToolTip("All imported VJoy ID and Input ID "
+                                   "assignments are ignored; existing "
+                                   "binding assignments in current "
+                                   "profile will not be modified"
                                     )
         self.button_group.addButton(
             preserve_button, 
