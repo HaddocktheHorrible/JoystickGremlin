@@ -1,6 +1,7 @@
 """Populates bindings from CSV to current Profile
 
 Column indexes start at 1
+Assumes 1 header
 
 Lines starting in "[" or ";" are ignored. Config entries that do not
 relate to key bindings (such as "difficulty"; axis sensitivity and
@@ -41,6 +42,7 @@ Arguments example:
                         
 """
 
+from ast import Import
 from pydoc import describe
 import re
 import argparse
@@ -48,6 +50,7 @@ import gremlin.error
 
 import_filter = "Comma-separated list (*.csv)"
 _delimiter = ","
+_num_headers = 1
 _binding_col = None
 _assignment_col = None
 _description_col = None
@@ -72,13 +75,30 @@ def main(file_lines, arg_string):
     """
     global _binding_col, _assignment_col, _description_col
     
+    header = file_lines[_num_headers-1]
     args = _parse_args(arg_string.split())
-    _binding_col  = args.binding_column - 1
-    _assignment_col  = args.assignment_column - 1
-    if args.description_column is not None:
-        _description_col  = args.description_column - 1
+    _binding_col = _get_column_index(header, args.binding_column)
+    _assignment_col = _get_column_index(header, args.assignment_column)
+    _description_col = _get_column_index(header, args.description_column)
     
-    return _import(file_lines)
+    return _import(file_lines[_num_headers:])
+
+def _get_column_index(header, column_id):
+    """Return column index from header string and identifier"""
+    if column_id is None:
+        return column_id
+
+    try:
+        return int(column_id) - 1
+    except ValueError:
+        pass
+
+    try:
+        return header.index(column_id)
+    except ValueError:
+        pass
+    
+    raise gremlin.error.ImporterError(("Could not find column '{}'!").format(column_id))
 
 def _parse_args(args):
     """Parse optional arg string
@@ -98,15 +118,13 @@ def _parse_args(args):
     
     parser = argparse.ArgumentParser(usage=__doc__, add_help=False)
     parser.add_argument("binding_column",
-                        type=int,
                         help="column number for list of bindings"
                         )
     parser.add_argument("assignment_column",
-                        type=int,
                         help="column number for list of vjoy assignments"
                         )
     parser.add_argument("--description_column",
-                        type=int,
+                        default=None,
                         help="column number for list of descriptions"
                         )
     valid, unknown = parser.parse_known_args(args)
