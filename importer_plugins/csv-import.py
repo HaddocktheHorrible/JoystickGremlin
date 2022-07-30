@@ -2,6 +2,10 @@
 
 Column indexes start at 1
 Assumes 1 header
+vjoy_#-x_axis
+vjoy_#-btn_#
+axis (match ax.*)
+button (match b.*n)
 
 Lines starting in "[" or ";" are ignored. Config entries that do not
 relate to key bindings (such as "difficulty"; axis sensitivity and
@@ -42,8 +46,6 @@ Arguments example:
                         
 """
 
-from ast import Import
-from pydoc import describe
 import re
 import argparse
 import gremlin.error
@@ -142,27 +144,27 @@ def _import(file_lines):
     
     found = {}
     for line in file_lines:
-        if line.strip() and line.strip()[0] not in _comment_flags:
-            item = _delineated_line2vjoy_item(line)
-            if item:
-                input_type = next(iter(item))
-                if input_type in found.keys():
-                    found[input_type].update(item[input_type])
-                else:
-                    found.update(item)
+        item = _delineated_line2vjoy_item(line)
+        if item:
+            input_type = next(iter(item))
+            if input_type in found.keys():
+                found[input_type].update(item[input_type])
+            else:
+                found.update(item)
     return found
 
 def _delineated_line2vjoy_item(line):
     """Interpret line to get vjoy output
     
-    :param line with comma-separated delineation
+    :param delineated line string
     :return vjoy_item dict entry
     """
-    row = line.split(_delimiter)
     
+    # parse assignment, binding, and description from csv row
+    row = line.split(_delimiter)
     try:
         binding = row[_binding_col].strip()
-        assignment = row[_assignment_col].strip()
+        assignment = row[_assignment_col].strip().lower()
         if _description_col is not None:
             description = row[_description_col].strip()
         else:
@@ -175,60 +177,59 @@ def _delineated_line2vjoy_item(line):
                ).format(last_col, len(row)))
         raise gremlin.error.ImporterError(msg)
             
-    # return empty if invalid assignment
-    # todo: update functions
+    # return empty if invalid entry
     if not _is_valid_assignment(assignment) \
        or not _is_valid_binding(binding):
         return {}
     
-    # get input_type and id
-    if clod_input in _axis_string_to_id:
-        input_type = "axis"
-        input_id = _axis_string_to_id[clod_input]
-    elif "Key" in clod_input:
-        input_type = "button"
-        input_id = int(clod_input.split("Key")[-1])
-    elif "Pov" in clod_input:
-        input_type = "button"
-        input_id = "" # bindings don't support hats, so assign to button
-    elif not _ignore_keyboard:
-        input_type = "button"
-        input_id = ""
+    # get vjoy id
+    vjoy_str = assignment.split("-")[0]
+    if "vjoy_" in vjoy_str:
+        vjoy_id = re.sub("vjoy_","",vjoy_str)
     else:
-        return {}
+        vjoy_id = ""
         
-    # assemble return
+    # get input_type
+    csv_input = assignment.split("-")[-1]
+    if (csv_input in _axis_string_to_id or
+        re.findall("^ax",csv_input)):
+        input_type = "axis"
+    else:
+        input_type = "button"
+        
+    # get input_id
+    found_num = re.findall("\d+",csv_input)
+    if csv_input in _axis_string_to_id:
+        input_id = _axis_string_to_id[csv_input]
+    elif found_num:
+        input_id = found_num[0]
+    else:
+        input_id = ""
+        
+    # assemble item to return
     vjoy_item = {}
     vjoy_item[input_type] = {}
     vjoy_item[input_type][binding] = {
         "device_id": vjoy_id,
         "input_id": input_id,
-        "description": ""
+        "description": description
     }
     return vjoy_item
 
-def _is_valid_assignment(clod_assignment):
-    """Returns false if a clod keyword is found"""
+def _is_valid_assignment(assignment):
+    """Returns false if invalid assignment is found"""
     
-    invalid_keywords = [
-        "hotkeys",
-        "difficulty",
-        "lastSingleMiss"
-    ]
-    
-    if clod_assignment in invalid_keywords:
-        return False    # non-bindable keyword -- ignore
-    elif re.search("^[-?|\d]\d+$", clod_assignment):
-        return False    # multi-digit string for LastFocus field -- ignore
-    elif re.search("^\d+:-?\d+$", clod_assignment):
-        return False    # digit:digit string for ChatWindow field -- ignore
+    if not assignment:
+        return False    # empty string -- ignore
+    elif re.search("vjoy", assignment.split("-")[-1]) is not None:
+        return False    # vjoy given without an input type
     else:
         return True
     
-def _is_valid_binding(clod_binding):
-    """Returns false if a non-keyword is found"""
+def _is_valid_binding(binding):
+    """Returns false if invalid binding is found"""
     
-    if re.sub("[-\.\s]","",clod_binding).isdigit():
-        return False    # string of digits for axis sensitivities -- ignore
+    if not binding:
+        return False    # empty string -- ignore
     else:
         return True
