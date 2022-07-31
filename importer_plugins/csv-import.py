@@ -52,12 +52,12 @@ exceeds the number of columns), an error is raised.
 
 Positional arguments:
 
-    binding_column
+    binding_column_identifier
             Binding column index (first column = "1") or 
             case-sensitive header string; if header string is 
             specified, it must be present in the first CSV row
     
-    assignment_column
+    assignment_column_identifier
             Assignment column index (first column = "1") or 
             case-sensitive header string; if header string is 
             specified, it must be present in the first CSV row
@@ -72,6 +72,7 @@ Optional arguments:
 """
 
 import re
+import shlex
 import argparse
 import gremlin.error
 
@@ -97,13 +98,20 @@ def main(file_lines, arg_string):
     """Process passed args, run exporter with passed file contents
     
     :param file_lines Contents of file to import; provided by Joystick Gremlin as list from readlines()
-    :param arg_string Optional arguments, parsed by _parse_args
+    :param arg_string Argument spec, parsed by _parse_args
     :return Binding dictionary; to be saved to profile by Joystick Gremlin
     """
     global _binding_col, _assignment_col, _description_col
     
-    header = file_lines[_num_headers-1]
-    args = _parse_args(arg_string.split())
+    try:
+        args = _parse_args(shlex.split(arg_string))
+    except gremlin.error.ImporterError as e:
+        raise e
+    except:
+        msg = "ArgumentError: bad input arguments. Check importer description for details."
+        raise gremlin.error.ImporterError(msg)
+    
+    header = file_lines[_num_headers-1].strip().split(_delimiter)
     _binding_col = _get_column_index(header, args.binding_column)
     _assignment_col = _get_column_index(header, args.assignment_column)
     _description_col = _get_column_index(header, args.description_column)
@@ -111,7 +119,7 @@ def main(file_lines, arg_string):
     return _import(file_lines[_num_headers:])
 
 def _parse_args(args):
-    """Parse optional arg string
+    """Parse arg string
     
     Joystick Gremlin hangs if argparse exists with a write to terminal.
     To avoid this:
@@ -134,8 +142,8 @@ def _parse_args(args):
                         help="column number for list of vjoy assignments"
                         )
     parser.add_argument("-d", "--description_column",
-                        default=None,
-                        help="column number for list of descriptions"
+                        help="column number for list of descriptions",
+                        default=None
                         )
     valid, unknown = parser.parse_known_args(args)
     if unknown:
@@ -184,6 +192,8 @@ def _delineated_line2vjoy_item(line):
     :param delineated line string
     :return vjoy_item dict entry
     """
+    
+    global _binding_col, _assignment_col, _description_col
     
     # parse assignment, binding, and description from csv row
     row = line.split(_delimiter)
