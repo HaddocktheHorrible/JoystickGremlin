@@ -1,48 +1,73 @@
 """Populates bindings from CSV to current Profile
 
-Column indexes start at 1
-Assumes 1 header
-vjoy_#-x_axis
-vjoy_#-btn_#
-axis (match ax.*)
-button (match b.*n)
+The CSV file must specify binding and assignment pairs in two 
+separate columns. Optionally, a third column may be specified 
+for binding descriptions. The first row in the CSV file
+is assumed to contain column headers only; the remaining rows
+each specify a single binding, assignment, and description set. 
 
-Lines starting in "[" or ";" are ignored. Config entries that do not
-relate to key bindings (such as "difficulty"; axis sensitivity and
-dead zones; and chat window settings) are ignored.
+In each row, any appropriate string may be used for the binding
+and (optional) description entries. Each assignment entry must
+specify an input type (either "axis" or "button"). Additionally,
+a desired VJoy device may be specified. If the binding or 
+assignment entries are missing from a row, that row is skipped.
 
-Since hats are not supported by Joystick Gremlin bindings,
-"Pov" entries are bound to VJoy buttons instead.
+The following are examples of valid assignment strings:
+
+    "vjoy_1-x_axis"     # specifies the x-axis from VJoy 1
+    "vjoy_1-ax1"        # specifies the 1st axis (X) from VJoy 1
+    "vjoy_2-btn_2"      # specifies button 2 from VJoy 2
+    "vjoy_2-2"          # specifies button 2 from VJoy 2
+    "axis"              # specifies first unbound axis
+    "button"            # specifies first unbound button
+
+If a vjoy assignment is specified, "vjoy" must be present. The
+axis/button assignment must be listed after the vjoy identifier
+and separated from it with a dash ("-"). To specify an "axis" 
+input type, the axis/button assignment string must begin with 
+"ax" or consist of one of the following:
+
+    "x_axis"
+    "y_axis"
+    "z_axis"
+    "x_rot"
+    "y_rot"
+    "z_rot"
+    "dial"
+    "slider"
+    
+All other non-empty entries are assumed to be button 
+assignments, although either "b", btn", or "button" is
+suggested. It is suggested to use underscores ("_") instead
+of spaces. All assignment strings are case-insensitive.
+
+The binding, assignment, and (optional) description columns may
+be in any order. Column identifiers must be provided as
+positional arguments to the importer. Each column identifier
+consists of either an integer index (where the first column 
+index is equal to "1") or as a column header string. If any
+column identifier cannot be found (e.g. the string entered
+is not present in the header row or the column index 
+exceeds the number of columns), an error is raised.
+
+Positional arguments:
+
+    binding_column
+            Binding column index (first column = "1") or 
+            case-sensitive header string; if header string is 
+            specified, it must be present in the first CSV row
+    
+    assignment_column
+            Assignment column index (first column = "1") or 
+            case-sensitive header string; if header string is 
+            specified, it must be present in the first CSV row
 
 Optional arguments:
 
-    -m, --device_map <VJoy_ID> <CLoD_ID>
-            VJoy ID number and associated CLoD ID string; only one
-            pair may be specified per flag; multiple flags may be
-            specified
-            
-    --ignore_unmapped
-            joystick devices which have not been mapped to a VJoy ID
-            will be ignored; if this is not specified; all unmapped
-            joystick devices are reassigned to the first available 
-            VJoy device
-
-    --ignore_keyboard
-            keyboard assignments found in the config file will NOT
-            be imported; if this is not specified, all keyboard
-            assignments will be imported to vjoy buttons
-                        
-Arguments example: 
-
-    To assign bindings from "vJoy_Device-66210FF9" to VJoy 1 and to
-    remap all remaining buttons and axes to the first available VJoy:
-    
-    -m 1 66210FF9
-    
-    To additionally ignore any keyboard buttons (i.e. those that
-    have not been assigned to a secondary device):
-    
-    -m 1 66210FF9 --ignore_keyboard
+    -d, --description_column <column identifier>
+            Description column index (first column = "1") or 
+            case-sensitive header string; if header string is 
+            specified, it must be present in the first CSV row
                         
 """
 
@@ -85,23 +110,6 @@ def main(file_lines, arg_string):
     
     return _import(file_lines[_num_headers:])
 
-def _get_column_index(header, column_id):
-    """Return column index from header string and identifier"""
-    if column_id is None:
-        return column_id
-
-    try:
-        return int(column_id) - 1
-    except ValueError:
-        pass
-
-    try:
-        return header.index(column_id)
-    except ValueError:
-        pass
-    
-    raise gremlin.error.ImporterError(("Could not find column '{}'!").format(column_id))
-
 def _parse_args(args):
     """Parse optional arg string
     
@@ -125,7 +133,7 @@ def _parse_args(args):
     parser.add_argument("assignment_column",
                         help="column number for list of vjoy assignments"
                         )
-    parser.add_argument("--description_column",
+    parser.add_argument("-d", "--description_column",
                         default=None,
                         help="column number for list of descriptions"
                         )
@@ -135,6 +143,23 @@ def _parse_args(args):
                ).format(unknown[0])
         raise gremlin.error.ImporterError(msg)
     return valid
+
+def _get_column_index(header, column_id):
+    """Return column index from header string and identifier"""
+    if column_id is None:
+        return column_id
+
+    try:
+        return int(column_id) - 1
+    except ValueError:
+        pass
+
+    try:
+        return header.index(column_id)
+    except ValueError:
+        pass
+    
+    raise gremlin.error.ImporterError(("Could not find column '{}'!").format(column_id))
 
 def _import(file_lines):
     """Parse file lines into dict entries
@@ -184,8 +209,8 @@ def _delineated_line2vjoy_item(line):
     
     # get vjoy id
     vjoy_str = assignment.split("-")[0]
-    if "vjoy_" in vjoy_str:
-        vjoy_id = re.sub("vjoy_","",vjoy_str)
+    if re.search("vjoy.*\d+",vjoy_str):
+        vjoy_id = re.findall("\d+",vjoy_str)[0]
     else:
         vjoy_id = ""
         
@@ -221,6 +246,8 @@ def _is_valid_assignment(assignment):
     
     if not assignment:
         return False    # empty string -- ignore
+    elif not assignment.split("-"):
+        return False    # invalid entry -- ignore
     elif re.search("vjoy", assignment.split("-")[-1]) is not None:
         return False    # vjoy given without an input type
     else:
