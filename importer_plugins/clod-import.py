@@ -40,6 +40,7 @@ Arguments example:
 """
 
 import re
+import shlex
 import argparse
 import gremlin.error
 
@@ -88,7 +89,14 @@ def main(file_lines, arg_string):
     """
     global _vjoy_map, _ignore_keyboard, _ignore_unmapped
     
-    args = _parse_args(arg_string.split())
+    try:
+        args = _parse_args(shlex.split(arg_string))
+    except gremlin.error.ImporterError as e:
+        raise e
+    except:
+        msg = "ArgumentError: bad input arguments. Check importer description for details."
+        raise gremlin.error.ImporterError(msg)
+    
     _ignore_keyboard = args.ignore_keyboard
     _ignore_unmapped = args.ignore_unmapped
     if args.device_map is not None:
