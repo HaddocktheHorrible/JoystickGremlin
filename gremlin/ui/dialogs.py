@@ -17,6 +17,7 @@
 
 from operator import mod
 import os
+import re
 import logging
 import traceback
 import subprocess
@@ -1437,17 +1438,23 @@ class BindingExportUi(common.BaseDialogUi):
     def _show_help(self, module):
         """Show selected exporter help"""
 
+        # get docstring, if module selected
         if module is not None:
-            self.exporter_help.setText(getdoc(module))
+            docstring = getdoc(module)
         else:
-            self.exporter_help.setText(
+            docstring = (
                 "Exporters print VJoy bindings to a game-specific configuration file. "
                 "Optional arguments may be passed to the exporter function above. "
                 "Help for the selected exporter is listed in this dialog once an "
                 "exporter is selected."
                 )
-        if not self.exporter_help.text().strip():
+            
+        # if non-empty docstring, unwrap paragraph blocks for textbox wrapping
+        if not docstring.strip():
             self.exporter_help.setText("Selected exporter has no docstring.")
+        else: 
+            wrap_friendly_doc = re.sub("(?<=.) *\n(?=\S)", " ", docstring)
+            self.exporter_help.setText(wrap_friendly_doc)
             
     def _update_button_status(self):
         """Enable/disable buttons based on current exporter selection"""
@@ -1863,18 +1870,24 @@ class BindingImportUi(common.BaseDialogUi):
     def _show_help(self, module):
         """Show selected importer help"""
 
+        # get docstring, if module selected
         if module is not None:
-            self.importer_help.setText(getdoc(module))
+            docstring = getdoc(module)
         else:
-            self.importer_help.setText(
+            docstring = (
                 "Importers populate bindings from file to the current profile. "
                 "Optional arguments may be passed to the importer function above. "
                 "Help for the selected importer is listed in this dialog once an "
                 "importer is selected. The profile is only modified if no errors "
                 "occur during import."
                 )
-        if not self.importer_help.text().strip():
+       
+        # if non-empty docstring, unwrap paragraph blocks for textbox wrapping
+        if not docstring.strip():
             self.importer_help.setText("Selected importer has no docstring.")
+        else: 
+            wrap_friendly_doc = re.sub("(?<=.) *\n(?=\S)", " ", docstring)
+            self.importer_help.setText(wrap_friendly_doc)
             
     def _update_button_status(self):
         """Enable/disable buttons based on current importer selection"""
