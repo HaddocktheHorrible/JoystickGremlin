@@ -36,6 +36,7 @@ Hint:
     
 """
 
+import re
 import argparse
 import gremlin.error
 from gremlin.common import InputType
@@ -43,23 +44,22 @@ from gremlin.common import InputType
 template_filter = "XPlane 11 Profile (*.prf)"
 _comment_flags = ["[", ";"]
 _ignore_flags = []
-_axis_to_vjoy_map = {}
-_butn_to_vjoy_map = {}
+_clear_existing = False
 
-_axis_id_to_string = {
-    1: "AXE_X",
-    2: "AXE_Y",
-    3: "AXE_Z",
-    4: "AXE_RX",
-    5: "AXE_RY",
-    6: "AXE_RZ",
-    7: "AXE_U",
-    8: "AXE_V",
-}
+_axis = InputType.JoystickAxis
+_butn = InputType.JoystickButton
 
-_default_value_for_type = {
-    InputType.JoystickAxis: 0,
-    InputType.JoystickButton: "sim/none/none"
+_type_data = {
+    _axis: {
+        "vjoy_map": {}, 
+        "default": 0, 
+        "entry_format": "_joy_AXIS_use{} {}"
+    },
+    _butn: {
+        "vjoy_map": {}, 
+        "default": "sim/none/none", 
+        "entry_format": "_joy_BUTN_use{} {}"
+    },
 }
 
 class AppendMapPair(argparse.Action):
@@ -89,16 +89,15 @@ def main(bound_vjoy_dict, template_file, arg_string):
     :param arg_string Optional arguments, parsed by _parse_args
     :return Config file contents list with updated bindings; to be saved by Joystick Gremlin with writelines()
     """
-    global _axis_to_vjoy_map, _butn_to_vjoy_map, _ignore_flags
-    
-    # todo: give option to clear existing bindings
+    global _type_data, _ignore_flags, _clear_existing
     
     args = _parse_args(arg_string.split())
     _ignore_flags = args.ignore_flag
+    _clear_existing = args.clear_existing
     if args.device_map is not None:
         for vjoy_id, axis_id, butn_id in args.device_map:
-            _axis_to_vjoy_map[int(axis_id)] = int(vjoy_id)
-            _butn_to_vjoy_map[int(butn_id)] = int(vjoy_id)
+            _type_data[_axis]["vjoy_map"][int(axis_id)] = int(vjoy_id)
+            _type_data[_butn]["vjoy_map"][int(butn_id)] = int(vjoy_id)
     return _export(bound_vjoy_dict, template_file)
 
 def _parse_args(args):
@@ -121,14 +120,18 @@ def _parse_args(args):
     parser.add_argument("-m", "--device_map", 
                         nargs=3, 
                         action=AppendMapPair, 
-                        metavar=('VJOY_ID','CLOD_ID'), 
-                        help="vjoy id and associated CLoD id"
+                        metavar=('VJOY_ID','AXIS_ID', 'BUTN_ID'), 
+                        help="vjoy id and associated first axis and button ids"
                         )
     parser.add_argument("-i", "--ignore_flag", 
                         nargs='?', 
                         action='append', default=["#"],
                         type=lambda x: x if len(x) <=1 else False, # limit flag to one char at a time
                         help="binding assignments starting with IGNORE_FLAG are ignored"
+                        )
+    parser.add_argument("-c", "--clear_existing", 
+                        action="store_true",
+                        help="will reset unspecified axis and button bindings in file to default"
                         )
     valid, unknown = parser.parse_known_args(args)
     if unknown:
@@ -148,46 +151,71 @@ def _export(bound_vjoy_dict, template_file):
     
     axis_items, butn_items = _prepare_bound_items(bound_vjoy_dict)
     
-    # loop over file until first axis input
+    # only touch entries known to you... 
+    # loop over each type in order
+    # for each type, have:
+    #   start number per vjoy
+    #   "assignment" string generator ("+" input_id to get full string)
+    #   default binding - use if current assignment string doesn't match
+    #   
+    # for each type:
+    #   for each vjoy
+    #       assemble first input string -- loop over lines until we find it
+    #           add unchanged lines to file
+    #       then check current line against current item
+    #           replace binding with default if no match
+    #           replace binding with item binding if matched; increment item index
+    #       add modified line to file
+    #       keep going while not at end of item list
     # 
     # 
     
     # todo: re-write approach
+    # todo: figure out how many items are "owned" by each vjoy device
+    # on my config- 499 axes for 11 devices and 3199 btns for 11 devices
+    # don't need this... just clear each vjoy as specified
     #
-    # overwrite old bindings in-place
-    for line in oldfile:
-        line = line.strip()
-        if line and line[0] not in _comment_flags:
-            binding = line.split("=")[-1].strip()
-            assignment = line.split("=")[0].strip()
-            if binding in bound_vjoy_dict.keys():
-                bound_item = bound_vjoy_dict[binding]
-                line = _vjoy_item2clod_item(bound_item)
-                bound_vjoy_dict.pop(binding)
-            elif assignment.split("+")[0] in _vjoy_map.values():
-                # remove old assignment from output data
-                line = "; ={}".format(binding)
-        newfile.append(line + "\n")
     
-    # append unsorted bindings to file
-    newfile.append("\n[Unsorted Gremlin Bindings]\n")
-    for bound_item in bound_vjoy_dict.values():
-        newfile.append(_vjoy_item2clod_item(bound_item) + "\n")
+    # find first axis assignment in file
+    axis_entry = _type_data[_axis]["entry_format"].format(".*", ".*")
+    line_idx = 0
+    while re.match(axis_entry, oldfile[line_idx]) is None:
+        newfile.append(oldfile[line_idx] + "\n")
+        line_idx += 1
+        
+    axis_items = _prepare_bound_items_of_type(bound_vjoy_dict, _axis)
+    item_idx = 0
+    # march over items
+    
+    # overwrite old bindings in-place
+    # for line in oldfile:
+    #     line = line.strip()
+    #     if line and line[0] not in _comment_flags:
+    #         binding = line.split("=")[-1].strip()
+    #         assignment = line.split("=")[0].strip()
+    #         if binding in bound_vjoy_dict.keys():
+    #             bound_item = bound_vjoy_dict[binding]
+    #             line = _vjoy_item2clod_item(bound_item)
+    #             bound_vjoy_dict.pop(binding)
+    #         elif assignment.split("+")[0] in _vjoy_map.values():
+    #             # remove old assignment from output data
+    #             line = "; ={}".format(binding)
+    #     newfile.append(line + "\n")
+    
+    # # append unsorted bindings to file
+    # newfile.append("\n[Unsorted Gremlin Bindings]\n")
+    # for bound_item in bound_vjoy_dict.values():
+    #     newfile.append(_vjoy_item2clod_item(bound_item) + "\n")
         
     return newfile
 
-def _prepare_bound_items(bound_vjoy_dict):
-    """Group and sort bindings into order expected by XPlane"""
+def _prepare_bound_items_of_type(bound_vjoy_dict, input_type):
+    """Group and sort bindings for given type into order expected by XPlane"""
     
-    # get sorted axis items
-    axis_vjoy_items = [ item for item in bound_vjoy_dict.values() if item.input_type == InputType.JoystickAxis ]
-    axis_xp11_items = _vjoy_items_to_xp11_items(axis_vjoy_items, _axis_to_vjoy_map)
+    vjoy_items = [ item for item in bound_vjoy_dict.values() if item.input_type == input_type ]
+    xp11_items = _vjoy_items_to_xp11_items(vjoy_items, _type_data[input_type]["vjoy_map"])
     
-    # get sorted butn items
-    butn_vjoy_items = [ item for item in bound_vjoy_dict.values() if item.input_type == InputType.JoystickButton ]
-    butn_xp11_items = _vjoy_items_to_xp11_items(butn_vjoy_items, _butn_to_vjoy_map)
-    
-    return axis_xp11_items, butn_xp11_items
+    return xp11_items
         
 def _vjoy_items_to_xp11_items(all_vjoy_items, vjoy_map):
     """Prepare item list for XPlane 11 import"""
