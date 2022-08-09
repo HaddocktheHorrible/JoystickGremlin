@@ -42,13 +42,12 @@ import gremlin.error
 from gremlin.common import InputType
 
 template_filter = "XPlane 11 Profile (*.prf)"
-_comment_flags = ["[", ";"]
-_ignore_flags = []
 _clear_existing = False
+_ignore_flags = []
 
+# common data for input types
 _axis = InputType.JoystickAxis
 _butn = InputType.JoystickButton
-
 _type_data = {
     _axis: {
         "vjoy_map": {}, 
@@ -145,9 +144,9 @@ def _export(bound_vjoy_dict, template_file):
     oldfile = template_file
     newfile = []
     
+    # process vjoy binding list
     bound_vjoy_dict = _remove_commented_items(bound_vjoy_dict)
-    
-    # todo: check all bound vjoy_ids have a mapped axis or button
+    _validate_map(bound_vjoy_dict)
     
     # update axis assignments
     remaining = oldfile
@@ -163,28 +162,6 @@ def _export(bound_vjoy_dict, template_file):
     
     return newfile
 
-def _prepare_bound_items_of_type(bound_vjoy_dict, input_type):
-    """Group and sort bindings for given type into order expected by XPlane"""
-    
-    vjoy_items = [ item for item in bound_vjoy_dict.values() if item.input_type == input_type ]
-    xp11_items = _vjoy_items_to_xp11_items(vjoy_items, _type_data[input_type]["vjoy_map"])
-    
-    return xp11_items
-        
-def _vjoy_items_to_xp11_items(all_vjoy_items, vjoy_map):
-    """Prepare item list for XPlane 11 import"""
-    
-    # sort items into order for xplane 11 prf file
-    # update item input_ids to match xplane 11 numbering
-    xp11_items = []
-    for xp11_idx in sorted(vjoy_map):
-        vjoy_id = vjoy_map[xp11_idx]
-        vjoy_items = [ i for i in all_vjoy_items if i.vjoy_id == vjoy_id ]
-        vjoy_items = sorted(vjoy_items, key=lambda x: x.input_id)
-        for item in vjoy_items:
-            item.input_id += (xp11_idx - 1)
-        xp11_items += vjoy_items
-
 def _remove_commented_items(bound_vjoy_dict):
     """Removes bindings flagged with comment string"""
     cleaned_vjoy_list = {}
@@ -192,6 +169,24 @@ def _remove_commented_items(bound_vjoy_dict):
         if binding[0] not in _ignore_flags:
             cleaned_vjoy_list[binding] = vjoy_item
     return cleaned_vjoy_list
+
+def _validate_map(bound_vjoy_dict):
+    """Check all bound vjoy_ids have a mapping"""
+    
+    # collect all vjoy's from input items
+    bound_vjoys = set([i.vjoy_id for i in bound_vjoy_dict.values()])
+    
+    # collect all vjoys in map
+    mapped_vjoys = set()
+    for input_type in _type_data:
+        mapped_vjoys.update(_type_data[input_type]["vjoy_map"].values())
+
+    # check for missing bound vjoys from map        
+    if bound_vjoys - mapped_vjoys:
+        msg = ("Mapping error: missing required mapping for VJoy ID's: {}"
+              ).format(bound_vjoys - mapped_vjoys)
+        raise gremlin.error.ExporterError(msg)
+    return bound_vjoy_dict
 
 def _update_entries_of_type(entry_list, bound_vjoy_dict, input_type):
     """Update file lines for given type"""
@@ -209,7 +204,7 @@ def _update_entries_of_type(entry_list, bound_vjoy_dict, input_type):
     item_list = _prepare_bound_items_of_type(bound_vjoy_dict, input_type)
     item_idx = 0
     
-    # march over items
+    # march over items in order
     while item_idx < len(item_list):
         
         # unpack current item
@@ -241,3 +236,24 @@ def _update_entries_of_type(entry_list, bound_vjoy_dict, input_type):
             
     return entry_list
  
+def _prepare_bound_items_of_type(bound_vjoy_dict, input_type):
+    """Group and sort bindings for given type into order expected by XPlane"""
+    
+    vjoy_items = [ item for item in bound_vjoy_dict.values() if item.input_type == input_type ]
+    xp11_items = _vjoy_items_to_xp11_items(vjoy_items, _type_data[input_type]["vjoy_map"])
+    
+    return xp11_items
+        
+def _vjoy_items_to_xp11_items(all_vjoy_items, vjoy_map):
+    """Prepare item list for XPlane 11 import"""
+    
+    # sort items into order for xplane 11 prf file
+    # update item input_ids to match xplane 11 numbering
+    xp11_items = []
+    for xp11_idx in sorted(vjoy_map):
+        vjoy_id = vjoy_map[xp11_idx]
+        vjoy_items = [ i for i in all_vjoy_items if i.vjoy_id == vjoy_id ]
+        vjoy_items = sorted(vjoy_items, key=lambda x: x.input_id)
+        for item in vjoy_items:
+            item.input_id += (xp11_idx - 1)
+        xp11_items += vjoy_items
