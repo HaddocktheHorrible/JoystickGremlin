@@ -149,52 +149,8 @@ def _export(bound_vjoy_dict, template_file):
     
     # todo: check all bound vjoy_ids have a mapped axis or button
     
-    # find first axis assignment in file
-    entry_default = _type_data[_axis]["default"]
-    entry_format = _type_data[_axis]["entry_format"]
-    entry_match = entry_format.format(".*", ".*")
-    line_idx = 0
-    while re.match(entry_match, oldfile[line_idx]) is None:
-        newfile.append(oldfile[line_idx] + "\n")
-        line_idx += 1
-        
-    axis_items = _prepare_bound_items_of_type(bound_vjoy_dict, _axis)
-    item_idx = 0
-    
-    
-    # march over items
-    while item_idx < len(axis_items):
-        binding = axis_items[item_idx].binding
-        input_id = axis_items[item_idx].input_id
-        item_entry = entry_format.format(input_id, binding) 
-        item_match = entry_format.format(input_id, ".*") 
-        
-        # walk over lines until a match for current item is found
-        while re.match(item_match, oldfile[line_idx]) is None:
-            if re.match(entry_match, oldfile[line_idx]) is None:
-                msg = ("Config Error: insufficient {} items in .prf file."
-                       ).format(InputType.to_string(_axis))
-                raise gremlin.error.ExporterError(msg)
-            if _clear_existing:
-                new_line = re.sub("(?<=\s).*$", entry_default, oldfile[line_idx])
-            else:
-                new_line = oldfile[line_idx]
-            newfile.append(new_line + "\n")
-            line_idx += 1
-            
-        # replace next line with our item
-        newfile.append(item_entry + "\n")
-        line_idx += 1
-        item_idx += 1
-        
-    # clear remaining lines
-    if _clear_existing:
-        while re.match(entry_match, oldfile[line_idx]):
-            new_line = re.sub("(?<=\s).*$", entry_default, oldfile[line_idx])
-            newfile.append(new_line + "\n")
-            line_idx += 1
-            
-    # todo: repeat with button
+    newfile += _update_entries_of_type(oldfile, bound_vjoy_dict, _axis)
+    newfile += _update_entries_of_type(oldfile[len(newfile):], bound_vjoy_dict, _butn)
     
     return newfile
 
@@ -227,3 +183,53 @@ def _remove_commented_items(bound_vjoy_dict):
         if binding[0] not in _ignore_flags:
             cleaned_vjoy_list[binding] = vjoy_item
     return cleaned_vjoy_list
+
+def _update_entries_of_type(line_list, bound_vjoy_dict, input_type):
+    """Update file lines for given type"""
+    
+    # find first axis assignment in file
+    entry_default = _type_data[input_type]["default"]
+    entry_format = _type_data[input_type]["entry_format"]
+    entry_match = entry_format.format(".*", ".*")
+    line_idx = 0
+    while re.match(entry_match, line_list[line_idx]) is None:
+        line_list[line_idx] += "\n"
+        line_idx += 1
+        
+    item_list = _prepare_bound_items_of_type(bound_vjoy_dict, input_type)
+    item_idx = 0
+    
+    # march over items
+    while item_idx < len(item_list):
+        binding = item_list[item_idx].binding
+        input_id = item_list[item_idx].input_id
+        item_match = entry_format.format(input_id, ".*") 
+        item_entry = entry_format.format(input_id, binding) 
+        
+        # walk over lines until a match for current item is found
+        while re.match(item_match, line_list[line_idx]) is None:
+            if re.match(entry_match, line_list[line_idx]) is None:
+                msg = ("Config Error: insufficient {} items in .prf file."
+                       ).format(InputType.to_string(input_type))
+                raise gremlin.error.ExporterError(msg)
+            if _clear_existing:
+                new_line = re.sub("(?<=\s).*$", entry_default, line_list[line_idx])
+            else:
+                new_line = line_list[line_idx]
+            line_list[line_idx] = new_line + "\n"
+            line_idx += 1
+            
+        # replace next line with our item
+        line_list[line_idx] = item_entry + "\n"
+        line_idx += 1
+        item_idx += 1
+        
+    # clear remaining lines of type
+    if _clear_existing:
+        while re.match(entry_match, line_list[line_idx]):
+            new_line = re.sub("(?<=\s).*$", entry_default, line_list[line_idx])
+            line_list[line_idx] = new_line + "\n"
+            line_idx += 1
+            
+    return line_list
+ 
