@@ -149,64 +149,53 @@ def _export(bound_vjoy_dict, template_file):
     
     # todo: check all bound vjoy_ids have a mapped axis or button
     
-    axis_items, butn_items = _prepare_bound_items(bound_vjoy_dict)
-    
-    # only touch entries known to you... 
-    # loop over each type in order
-    # for each type, have:
-    #   start number per vjoy
-    #   "assignment" string generator ("+" input_id to get full string)
-    #   default binding - use if current assignment string doesn't match
-    #   
-    # for each type:
-    #   for each vjoy
-    #       assemble first input string -- loop over lines until we find it
-    #           add unchanged lines to file
-    #       then check current line against current item
-    #           replace binding with default if no match
-    #           replace binding with item binding if matched; increment item index
-    #       add modified line to file
-    #       keep going while not at end of item list
-    # 
-    # 
-    
-    # todo: re-write approach
-    # todo: figure out how many items are "owned" by each vjoy device
-    # on my config- 499 axes for 11 devices and 3199 btns for 11 devices
-    # don't need this... just clear each vjoy as specified
-    #
-    
     # find first axis assignment in file
-    axis_entry = _type_data[_axis]["entry_format"].format(".*", ".*")
+    entry_default = _type_data[_axis]["default"]
+    entry_format = _type_data[_axis]["entry_format"]
+    entry_match = entry_format.format(".*", ".*")
     line_idx = 0
-    while re.match(axis_entry, oldfile[line_idx]) is None:
+    while re.match(entry_match, oldfile[line_idx]) is None:
         newfile.append(oldfile[line_idx] + "\n")
         line_idx += 1
         
     axis_items = _prepare_bound_items_of_type(bound_vjoy_dict, _axis)
     item_idx = 0
+    
+    
     # march over items
-    
-    # overwrite old bindings in-place
-    # for line in oldfile:
-    #     line = line.strip()
-    #     if line and line[0] not in _comment_flags:
-    #         binding = line.split("=")[-1].strip()
-    #         assignment = line.split("=")[0].strip()
-    #         if binding in bound_vjoy_dict.keys():
-    #             bound_item = bound_vjoy_dict[binding]
-    #             line = _vjoy_item2clod_item(bound_item)
-    #             bound_vjoy_dict.pop(binding)
-    #         elif assignment.split("+")[0] in _vjoy_map.values():
-    #             # remove old assignment from output data
-    #             line = "; ={}".format(binding)
-    #     newfile.append(line + "\n")
-    
-    # # append unsorted bindings to file
-    # newfile.append("\n[Unsorted Gremlin Bindings]\n")
-    # for bound_item in bound_vjoy_dict.values():
-    #     newfile.append(_vjoy_item2clod_item(bound_item) + "\n")
+    while item_idx < len(axis_items):
+        binding = axis_items[item_idx].binding
+        input_id = axis_items[item_idx].input_id
+        item_entry = entry_format.format(input_id, binding) 
+        item_match = entry_format.format(input_id, ".*") 
         
+        # walk over lines until a match for current item is found
+        while re.match(item_match, oldfile[line_idx]) is None:
+            if re.match(entry_match, oldfile[line_idx]) is None:
+                msg = ("Config Error: insufficient {} items in .prf file."
+                       ).format(InputType.to_string(_axis))
+                raise gremlin.error.ExporterError(msg)
+            if _clear_existing:
+                new_line = re.sub("(?<=\s).*$", entry_default, oldfile[line_idx])
+            else:
+                new_line = oldfile[line_idx]
+            newfile.append(new_line + "\n")
+            line_idx += 1
+            
+        # replace next line with our item
+        newfile.append(item_entry + "\n")
+        line_idx += 1
+        item_idx += 1
+        
+    # clear remaining lines
+    if _clear_existing:
+        while re.match(entry_match, oldfile[line_idx]):
+            new_line = re.sub("(?<=\s).*$", entry_default, oldfile[line_idx])
+            newfile.append(new_line + "\n")
+            line_idx += 1
+            
+    # todo: repeat with button
+    
     return newfile
 
 def _prepare_bound_items_of_type(bound_vjoy_dict, input_type):
