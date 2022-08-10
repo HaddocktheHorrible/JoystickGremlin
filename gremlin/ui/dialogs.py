@@ -18,6 +18,7 @@
 from operator import mod
 import os
 import re
+import copy
 import logging
 import traceback
 import subprocess
@@ -1496,7 +1497,7 @@ class BindingExportUi(common.BaseDialogUi):
                 ).format(template_path, self._exporter_module.__file__)
             )
             outfile = self._exporter_module.main(
-                self._profile.get_all_bound_vjoys(),
+                copy.deepcopy(self._profile.get_all_bound_vjoys()),
                 template_fid.readlines(),
                 self._profile.settings.exporter_arg_string
                 )
