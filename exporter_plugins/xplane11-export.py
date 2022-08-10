@@ -1,38 +1,49 @@
 """Populates profile bindings to XPlane 11 profile (.prf) file from template.
 
-
-# TODO: update
-
 Optional arguments:
 
     -m, --device_map <VJoy_ID> <first_AXIS_use_id> <first_BUTN_use_id>
-            VJoy ID number and associated CLoD ID string; only one
-            pair may be specified per flag; multiple flags may be
-            specified
+            VJoy ID number and corresponding axis/button start indices 
+            within the given .prf file template; each vjoy mapping must 
+            include the vjoy id, axis start index, and button start
+            index, in that order
 
     -i, --ignore_flag <ignore_flag>
             binding assignments starting with IGNORE_FLAG are ignored; 
             ignored bindings are not listed in the output file; 
             multiple flags may be specified, but each flag may only 
             consist of one character; default = '#'
+            
+    -c, --clear_existing
+            remove bindings for all entries in the template .prf file
+            before applying bindings from current profile; default behavior 
+            preserves will only overwrite entries that have been specified 
+            in the current Joystick Gremlin profile
                         
 Arguments example: 
 
-    To register VJoy 1 as "vJoy_Device-66210FF9", VJoy 2 as 
-    "vJoy_Device-A4E92C9", and to ignore any bindings set in Joystick 
-    Gremlin starting with '#':
+    To output VJoy 1 entries from axis 0 and button 0 onwards; VJoy 2 
+    entries from axis 10 and button 129; to ignore any bindings set in Joystick 
+    Gremlin starting with '?'; and to clear existing bindings from the 
+    .prf template file
     
-    -m 1 66210FF9 -m 2 A4E92C9 -i #
-                        
+    -m 1 0 0 -m 2 10 129 -i ? -c
+
 Hint: 
 
-    To find the CLoD ID for each VJoy device, manually bind one VJoy 
-    output in CLoD. CLoD will report VJoy device bindings in the format:
-    
-    "vJoy_Device-<CLoD_ID>+Key#=<binding>"
-    
-    You may then register that CLoD_ID with its corresponding VJoy_ID as 
-    described above.
+    To find the axis/button start index for each vjoy device, manually 
+    bind the VJoy X axis and VJoy Button 1 in XPlane 11 in a new, empty profile.
+    Save the profile in XPlane 11, then navigate to the corresponding 
+    .prf file on disk. Open the .prf file in a text editor, then search for the 
+    first non-empty entry binding (for axes, this is any value other than "0"; 
+    for buttons, this is any value other than "sim/none/none"). 
+
+    Each entry should look one of the following: 
+        "_joy_AXIS_use<AXIS_use_id>"
+        "_joy_BUTN_use<BUTN_use_id>"
+
+    You can then enter the <AXIS_use_id> and <BUTN_use_id> as input arguments to 
+    this exporter for the VJoy ID used. Repeat the process for all VJoy devices.
     
 """
 
@@ -140,6 +151,7 @@ def _parse_args(args):
     return valid
 
 def _export(bound_vjoy_dict, template_file):
+    """Create new file lines from bindings and template"""
     
     oldfile = template_file
     newfile = []
