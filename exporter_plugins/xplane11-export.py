@@ -62,7 +62,7 @@ _butn = InputType.JoystickButton
 _type_data = {
     _axis: {
         "vjoy_map": {}, 
-        "default": 0, 
+        "default": "0", 
         "entry_format": "_joy_AXIS_use{} {}"
     },
     _butn: {
@@ -160,26 +160,16 @@ def _parse_args(args):
 def _export(bound_vjoy_dict, template_file):
     """Create new file lines from bindings and template"""
     
-    oldfile = template_file
-    newfile = []
-    
     # process vjoy binding list
     bound_vjoy_dict = _remove_commented_items(bound_vjoy_dict)
     _validate_map(bound_vjoy_dict)
     
-    # update axis assignments
-    remaining = oldfile
-    newfile += _update_entries_of_type(remaining, bound_vjoy_dict, _axis)
+    # update template in-place
+    file_lines = template_file
+    file_lines = _update_entries_of_type(file_lines, bound_vjoy_dict, _axis)
+    file_lines = _update_entries_of_type(file_lines, bound_vjoy_dict, _butn)
     
-    # update button assignments
-    remaining = oldfile[len(newfile):]
-    newfile += _update_entries_of_type(remaining, bound_vjoy_dict, _butn)
-    
-    # add remainder of file unchanged
-    remaining = oldfile[len(newfile):]
-    newfile += remaining
-    
-    return newfile
+    return file_lines
 
 def _remove_commented_items(bound_vjoy_dict):
     """Removes bindings flagged with comment string"""
