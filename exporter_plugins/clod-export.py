@@ -82,7 +82,14 @@ def main(bound_vjoy_dict, template_file, arg_string):
     """
     global _vjoy_map, _ignore_flags
     
-    args = _parse_args(arg_string.split())
+    try:
+        args = _parse_args(arg_string.split())
+    except gremlin.error.ImporterError as e:
+        raise e
+    except:
+        msg = "ArgumentError: bad input arguments. Check importer description for details."
+        raise gremlin.error.ImporterError(msg)
+    
     _ignore_flags = args.ignore_flag
     if args.device_map is not None:
         for vjoy_id, clod_id in args.device_map:
