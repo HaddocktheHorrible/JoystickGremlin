@@ -269,3 +269,4 @@ def _vjoy_items_to_xp11_items(all_vjoy_items, vjoy_map):
         for item in vjoy_items:
             item.input_id += (xp11_idx - 1)
         xp11_items += vjoy_items
+    return xp11_items
