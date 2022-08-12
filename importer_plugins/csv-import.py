@@ -95,7 +95,7 @@ _axis_string_to_id = {
 }
 
 def main(file_lines, arg_string):
-    """Process passed args, run exporter with passed file contents
+    """Process passed args, run importer with passed file contents
     
     :param file_lines Contents of file to import; provided by Joystick Gremlin as list from readlines()
     :param arg_string Argument spec, parsed by _parse_args

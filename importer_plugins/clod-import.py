@@ -81,7 +81,7 @@ class AppendMapPair(argparse.Action):
         setattr(namespace, self.dest, items)
 
 def main(file_lines, arg_string):
-    """Process passed args, run exporter with passed file contents
+    """Process passed args, run importer with passed file contents
     
     :param file_lines Contents of file to import; provided by Joystick Gremlin as list from readlines()
     :param arg_string Optional arguments, parsed by _parse_args
