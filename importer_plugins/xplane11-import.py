@@ -2,12 +2,18 @@
 
 Optional arguments:
 
-    -m, --device_map <VJoy_ID> <first_AXIS_use_id> <first_BUTN_use_id>
-            VJoy ID number and corresponding axis/button start indices 
+    -x, --axis_map <VJoy_ID> <first_AXIS_use_id> <last_AXIS_use_id>
+            VJoy ID number and corresponding axis first/last indices 
             within the given .prf file template; each vjoy mapping must 
-            include the vjoy id, axis start index, and button start
+            include the vjoy id, axis start index, and axis last
             index, in that order
             
+    -b, --butn_map <VJoy_ID> <first_BUTN_use_id> <last_BUTN_use_id>
+            VJoy ID number and corresponding butn first/last indices 
+            within the given .prf file template; each vjoy mapping must 
+            include the vjoy id, butn start index, and butn last
+            index, in that order
+    
     --ignore_unmapped
             joystick devices which have not been mapped to a VJoy ID
             will be ignored; if this is not specified, all unmapped
@@ -16,12 +22,13 @@ Optional arguments:
 
 Arguments example: 
 
-    To output VJoy 1 entries from axis 0 and button 0 onwards; VJoy 2 
-    entries from axis 10 and button 129; to ignore any bindings set in Joystick 
-    Gremlin starting with '?'; and to clear existing bindings from the 
-    .prf template file
+    To only import axis items 0 through 7 to VJoy 1 and button items 
+    50 to 75 to VJoy 2, use:
     
-    -m 1 0 0 -m 2 10 129 -i ? -c
+    -x 1 0 7 -x 2 50 75 --ignore_unmapped
+    
+    To additionally import remaining entries to the first unbound in 
+    the profile, simply remove "--ignore_unmapped"
 
 Hint: 
 
@@ -55,11 +62,13 @@ _butn = InputType.JoystickButton
 _type_data = {
     _axis: {
         "vjoy_map": {}, 
+        "first_id": {}, 
         "default": "0", 
         "entry_format": "_joy_AXIS_use{} {}"
     },
     _butn: {
         "vjoy_map": {}, 
+        "first_id": {}, 
         "default": "sim/none/none", 
         "entry_format": "_joy_BUTN_use{} {}"
     },
@@ -79,9 +88,9 @@ class AppendMapPair(argparse.Action):
                     ).format(i))
         
         # append and return
-        vjoy_id, axis_id, butn_id = values
+        vjoy_id, first_id, last_id = values
         items = getattr(namespace, self.dest) or []
-        items.append([vjoy_id, axis_id, butn_id])
+        items.append([vjoy_id, first_id, last_id])
         setattr(namespace, self.dest, items)
 
 def main(file_lines, arg_string):
@@ -102,10 +111,16 @@ def main(file_lines, arg_string):
         raise gremlin.error.ImporterError(msg)
     
     _ignore_unmapped = args.ignore_unmapped
-    if args.device_map is not None:
-        for vjoy_id, axis_id, butn_id in args.device_map:
-            _type_data[_axis]["vjoy_map"][int(axis_id)] = int(vjoy_id)
-            _type_data[_butn]["vjoy_map"][int(butn_id)] = int(vjoy_id)
+    if args.axis_map is not None:
+        for vjoy_id, first, last in args.axis_map:
+            vjoy_map = {str(key): vjoy_id for key in range(int(first), int(last))}
+            _type_data[_axis]["vjoy_map"].update(vjoy_map)
+            _type_data[_axis]["first_id"][vjoy_id] = first
+    if args.butn_map is not None:
+        for vjoy_id, first, last in args.butn_map:
+            vjoy_map = {str(key): vjoy_id for key in range(int(first), int(last))}
+            _type_data[_butn]["vjoy_map"].update(vjoy_map)
+            _type_data[_butn]["first_id"][vjoy_id] = first
     return _import(file_lines)
 
 def _parse_args(args):
@@ -125,11 +140,17 @@ def _parse_args(args):
     """
     
     parser = argparse.ArgumentParser(usage=__doc__, add_help=False)
-    parser.add_argument("-m", "--device_map", 
+    parser.add_argument("-x", "--axis_map", 
                         nargs=3, 
                         action=AppendMapPair, 
-                        metavar=('VJOY_ID', 'AXIS_ID', 'BUTN_ID'), 
-                        help="vjoy id and associated first axis and button ids"
+                        metavar=('VJOY_ID', 'FIRST_AXIS_ID', 'LAST_AXIS_ID'), 
+                        help="vjoy id and associated first and last axis ids"
+                        )
+    parser.add_argument("-b", "--butn_map", 
+                        nargs=3, 
+                        action=AppendMapPair, 
+                        metavar=('VJOY_ID', 'FIRST_BUTN_ID', 'LAST_BUTN_ID'), 
+                        help="vjoy id and associated first and last button ids"
                         )
     parser.add_argument("--ignore_unmapped", 
                         action='store_true',
@@ -185,21 +206,30 @@ def _xp11_item2vjoy_item(xp11_item):
     return vjoy_item
 
 def _parse_entry_of_type(xp11_item, input_type):
-    """Parse xplane 11 entry"""
+    """Parse xplane 11 entry using given type"""
     
-    # get binding from second entry
-    # use vjoy dict lookup to get vjoy id
+    input_type_name = InputType.to_string(input_type)
+    vjoy_map = _type_data[input_type]["joy_map"]
+    
+    # get binding, vjoy_id, and input_id
     binding = xp11_item.split()[1]
-    # input_id = re.sub("^\D", "",xp11_item.split()[0])
-    # vjoy_id = _type_data[input_type]["joy_map"][input_id]
+    input_id = re.sub("^\D", "",xp11_item.split()[0])
+    if input_id in vjoy_map:
+        vjoy_id = vjoy_map[input_id]
+        first_id = int(_type_data[input_type]["first_id"][vjoy_id])
+        input_id = int(input_id) - first_id + 1
+    elif not _ignore_unmapped:
+        vjoy_id = ""
+        input_id = ""
+    else:
+        return {}
     
     # assemble return
     vjoy_item = {}
-    input_type = InputType.to_string(input_type)
-    vjoy_item[input_type] = {}
-    vjoy_item[input_type][binding] = {
-        "input_id": "",
-        "device_id": "",
+    vjoy_item[input_type_name] = {}
+    vjoy_item[input_type_name][binding] = {
+        "input_id": input_id,
+        "device_id": vjoy_id,
         "description": ""
     }
     return vjoy_item
