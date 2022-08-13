@@ -16,7 +16,7 @@ Optional arguments:
             
     --ignore_unmapped
             joystick devices which have not been mapped to a VJoy ID
-            will be ignored; if this is not specified; all unmapped
+            will be ignored; if this is not specified, all unmapped
             joystick devices are reassigned to the first available 
             VJoy device
 
@@ -209,8 +209,8 @@ def _clod_item2vjoy_item(clod_item):
     vjoy_item = {}
     vjoy_item[input_type] = {}
     vjoy_item[input_type][binding] = {
-        "device_id": vjoy_id,
         "input_id": input_id,
+        "device_id": vjoy_id,
         "description": ""
     }
     return vjoy_item
