@@ -10,7 +10,7 @@ Optional arguments:
             
     --ignore_unmapped
             joystick devices which have not been mapped to a VJoy ID
-            will be ignored; if this is not specified; all unmapped
+            will be ignored; if this is not specified, all unmapped
             joystick devices are reassigned to the first available 
             VJoy device
 
@@ -106,7 +106,7 @@ def main(file_lines, arg_string):
         for vjoy_id, axis_id, butn_id in args.device_map:
             _type_data[_axis]["vjoy_map"][int(axis_id)] = int(vjoy_id)
             _type_data[_butn]["vjoy_map"][int(butn_id)] = int(vjoy_id)
-    return _export(bound_vjoy_dict, template_file)
+    return _import(file_lines)
 
 def _parse_args(args):
     """Parse optional arg string
@@ -128,7 +128,7 @@ def _parse_args(args):
     parser.add_argument("-m", "--device_map", 
                         nargs=3, 
                         action=AppendMapPair, 
-                        metavar=('VJOY_ID','AXIS_ID', 'BUTN_ID'), 
+                        metavar=('VJOY_ID', 'AXIS_ID', 'BUTN_ID'), 
                         help="vjoy id and associated first axis and button ids"
                         )
     parser.add_argument("--ignore_unmapped", 
@@ -162,14 +162,22 @@ def _import(file_lines):
 def _xp11_item2vjoy_item(xp11_item):
     """Return vjoy item from xplane 11 entry"""
     
-    # search for axis or button items
-    # todo: use not default in search string
-    axis_match = _type_data[_axis]["entry_format"].format(".*", ".*")
-    butn_match = _type_data[_butn]["entry_format"].format(".*", ".*")
+    # match strings for valid axis or button items
+    axis_match = _type_data[_axis]["entry_format"].format("\d*", "\S*")
+    butn_match = _type_data[_butn]["entry_format"].format("\d*", "\S*")
     
-    if   re.match(axis_match, xp11_item):
+    # match strings for axis or button items defaults
+    axis_empty = (_type_data[_axis]["entry_format"]
+                 ).format("\d*", _type_data[_axis]["default"])
+    butn_empty = (_type_data[_axis]["entry_format"]
+                 ).format("\d*", _type_data[_butn]["default"])
+    
+    # find non empty axes or buttons
+    if   ( re.match(axis_match, xp11_item) and 
+           not re.match(axis_empty, xp11_item) ):
         vjoy_item = _parse_entry_of_type(xp11_item, _axis)
-    elif re.match(butn_match, xp11_item):
+    elif ( re.match(butn_match, xp11_item) and
+           not re.match(butn_empty, xp11_item) ): 
         vjoy_item = _parse_entry_of_type(xp11_item, _butn)
     else: # return empty if neither found
         vjoy_item = {}
@@ -177,109 +185,21 @@ def _xp11_item2vjoy_item(xp11_item):
     return vjoy_item
 
 def _parse_entry_of_type(xp11_item, input_type):
+    """Parse xplane 11 entry"""
     
-    # split
     # get binding from second entry
-    # get digits at end of first string with re
     # use vjoy dict lookup to get vjoy id
-    # enter blank description
-    # todo: how to get last input id
+    binding = xp11_item.split()[1]
+    # input_id = re.sub("^\D", "",xp11_item.split()[0])
+    # vjoy_id = _type_data[input_type]["joy_map"][input_id]
     
-    return {}
-
-def _remove_commented_items(bound_vjoy_dict):
-    """Removes bindings flagged with comment string"""
-    cleaned_vjoy_list = {}
-    for binding, vjoy_item in bound_vjoy_dict.items():
-        if binding[0] not in _ignore_flags:
-            cleaned_vjoy_list[binding] = vjoy_item
-    return cleaned_vjoy_list
-
-def _validate_map(bound_vjoy_dict):
-    """Check all bound vjoy_ids have a mapping"""
-    
-    # collect all vjoy's from input items
-    bound_vjoys = set([i.vjoy_id for i in bound_vjoy_dict.values()])
-    
-    # collect all vjoys in map
-    mapped_vjoys = set()
-    for input_type in _type_data:
-        mapped_vjoys.update(_type_data[input_type]["vjoy_map"].values())
-
-    # check for missing bound vjoys from map        
-    if bound_vjoys - mapped_vjoys:
-        msg = ("Mapping error: missing required mapping for VJoy ID's: {}"
-              ).format(bound_vjoys - mapped_vjoys)
-        raise gremlin.error.ExporterError(msg)
-    return bound_vjoy_dict
-
-def _update_entries_of_type(entry_list, bound_vjoy_dict, input_type):
-    """Update file lines for given type"""
-    
-    # find first assignment of correct type in file
-    entry_format = _type_data[input_type]["entry_format"]
-    entry_match = entry_format.format(".*", ".*")
-    line_idx = 0
-    while re.match(entry_match, entry_list[line_idx]) is None:
-        line_idx += 1
-        
-    # prep to update lines
-    binding_default = _type_data[input_type]["default"]
-    binding_match = "(?<=\s).*(?=\n)$"
-    item_list = _prepare_bound_items_of_type(bound_vjoy_dict, input_type)
-    item_idx = 0
-    
-    # march over items in order
-    while item_idx < len(item_list):
-        
-        # unpack current item
-        binding = item_list[item_idx].binding
-        input_id = item_list[item_idx].input_id
-        item_match = entry_format.format(input_id, ".*") 
-        item_entry = entry_format.format(input_id, binding + "\n") 
-        
-        # walk over lines until a match for current item is found
-        while re.match(item_match, entry_list[line_idx]) is None:
-            if re.match(entry_match, entry_list[line_idx]) is None:
-                msg = ("Config Error: insufficient {} items in .prf file."
-                       ).format(InputType.to_string(input_type))
-                raise gremlin.error.ExporterError(msg)
-            if _clear_existing:
-                entry_list[line_idx] = re.sub(binding_match, binding_default, entry_list[line_idx])
-            line_idx += 1
-            
-        # replace next line with our item
-        entry_list[line_idx] = item_entry
-        line_idx += 1
-        item_idx += 1
-        
-    # clear remaining entries of type
-    if _clear_existing:
-        while re.match(entry_match, entry_list[line_idx]) is not None:
-            entry_list[line_idx] = re.sub(binding_match, binding_default, entry_list[line_idx])
-            line_idx += 1
-            
-    return entry_list
- 
-def _prepare_bound_items_of_type(bound_vjoy_dict, input_type):
-    """Group and sort bindings for given type into order expected by XPlane"""
-    
-    vjoy_items = [ item for item in bound_vjoy_dict.values() if item.input_type == input_type ]
-    xp11_items = _vjoy_items_to_xp11_items(vjoy_items, _type_data[input_type]["vjoy_map"])
-    
-    return xp11_items
-        
-def _vjoy_items_to_xp11_items(all_vjoy_items, vjoy_map):
-    """Prepare item list for XPlane 11 import"""
-    
-    # sort items into order for xplane 11 prf file
-    # update item input_ids to match xplane 11 numbering
-    xp11_items = []
-    for xp11_idx in sorted(vjoy_map):
-        vjoy_id = vjoy_map[xp11_idx]
-        vjoy_items = [ i for i in all_vjoy_items if i.vjoy_id == vjoy_id ]
-        vjoy_items = sorted(vjoy_items, key=lambda x: x.input_id)
-        for item in vjoy_items:
-            item.input_id += (xp11_idx - 1)
-        xp11_items += vjoy_items
-    return xp11_items
+    # assemble return
+    vjoy_item = {}
+    input_type = InputType.to_string(input_type)
+    vjoy_item[input_type] = {}
+    vjoy_item[input_type][binding] = {
+        "input_id": "",
+        "device_id": "",
+        "description": ""
+    }
+    return vjoy_item
