@@ -1831,9 +1831,9 @@ class Profile:
         for input_type in bindings:
             assigned_bindings = [b for b,v in bindings[input_type].items() if all(k in v.keys() for k in ["device_id", "input_id"])]
             for binding in assigned_bindings:
-                vjoy_id = bindings[binding]["device_id"]
-                input_id = bindings[binding]["input_id"]
-                description = bindings[binding]["description"]
+                vjoy_id = bindings[input_type][binding]["device_id"]
+                input_id = bindings[input_type][binding]["input_id"]
+                description = bindings[input_type][binding]["description"]
                 
                 # check if vjoy assignment is valid; bind to first unbound if invalid
                 vjoy_guid = joystick_handling.guid_from_vjoy_id(vjoy_id)
