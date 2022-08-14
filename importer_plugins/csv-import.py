@@ -35,7 +35,7 @@ input type, the axis/button assignment string must begin with
     "z_rot"
     "dial"
     "slider"
-  
+
 All other non-empty entries are assumed to be button 
 assignments, although either "b", btn", or "button" is
 suggested. It is suggested to use underscores ("_") instead

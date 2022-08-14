@@ -24,7 +24,7 @@ Optional arguments:
             keyboard assignments found in the config file will NOT
             be imported; if this is not specified, all keyboard
             assignments will be imported to vjoy buttons
-                        
+
 Arguments example: 
 
     To assign bindings from "vJoy_Device-66210FF9" to VJoy 1 and to
