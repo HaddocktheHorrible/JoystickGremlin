@@ -1454,7 +1454,7 @@ class BindingExportUi(common.BaseDialogUi):
         if not docstring.strip():
             self.exporter_help.setText("Selected exporter has no docstring.")
         else: 
-            wrap_friendly_doc = re.sub("(?<=.) *\n(?=\S)", " ", docstring)
+            wrap_friendly_doc = re.sub(r"(?<=.) *\n(?=\S)", " ", docstring)
             self.exporter_help.setText(wrap_friendly_doc)
             
     def _update_button_status(self):
@@ -1887,7 +1887,7 @@ class BindingImportUi(common.BaseDialogUi):
         if not docstring.strip():
             self.importer_help.setText("Selected importer has no docstring.")
         else: 
-            wrap_friendly_doc = re.sub("(?<=.) *\n(?=\S)", " ", docstring)
+            wrap_friendly_doc = re.sub(r"(?<=.) *\n(?=\S)", " ", docstring)
             self.importer_help.setText(wrap_friendly_doc)
             
     def _update_button_status(self):
