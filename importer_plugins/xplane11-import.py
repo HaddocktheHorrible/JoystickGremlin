@@ -64,13 +64,13 @@ _type_data = {
         "vjoy_map": {}, 
         "first_id": {}, 
         "default": "0", 
-        "entry_format": "_joy_AXIS_use{} {}"
+        "entry_format": r"_joy_AXIS_use{} {}"
     },
     _butn: {
         "vjoy_map": {}, 
         "first_id": {}, 
         "default": "sim/none/none", 
-        "entry_format": "_joy_BUTN_use{} {}"
+        "entry_format": r"_joy_BUTN_use{} {}"
     },
 }
 
@@ -213,7 +213,7 @@ def _parse_entry_of_type(xp11_item, input_type):
     
     # get binding, vjoy_id, and input_id
     binding = xp11_item.split()[1]
-    input_id = re.sub("^\D*", "",xp11_item.split()[0])
+    input_id = re.sub(r"^\D*", "",xp11_item.split()[0])
     if input_id in vjoy_map:
         vjoy_id = vjoy_map[input_id]
         first_id = int(_type_data[input_type]["first_id"][vjoy_id])

@@ -219,21 +219,21 @@ def _delineated_line2vjoy_item(line):
     
     # get vjoy id
     vjoy_str = assignment.split("-")[0]
-    if re.search("vjoy.*\d+",vjoy_str):
-        vjoy_id = re.findall("\d+",vjoy_str)[0]
+    if re.search(r"vjoy.*\d+",vjoy_str):
+        vjoy_id = re.findall(r"\d+",vjoy_str)[0]
     else:
         vjoy_id = ""
         
     # get input_type
     csv_input = assignment.split("-")[-1]
     if (csv_input in _axis_string_to_id or
-        re.findall("^ax",csv_input)):
+        re.findall(r"^ax",csv_input)):
         input_type = "axis"
     else:
         input_type = "button"
         
     # get input_id
-    found_num = re.findall("\d+",csv_input)
+    found_num = re.findall(r"\d+",csv_input)
     if csv_input in _axis_string_to_id:
         input_id = _axis_string_to_id[csv_input]
     elif found_num:

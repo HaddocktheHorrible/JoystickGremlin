@@ -174,7 +174,7 @@ def _clod_item2vjoy_item(clod_item):
     
     # remove "Pov" assignments in device string 
     # i.e. "Pov270 DevXXX" returns "DevXXX"
-    clod_dev = re.sub("^Pov\d+\s","",clod_dev)
+    clod_dev = re.sub(r"^Pov\d+\s","",clod_dev)
     
     # return empty if invalid assignment
     if not _is_valid_assignment(assignment) \
@@ -226,9 +226,9 @@ def _is_valid_assignment(clod_assignment):
     
     if clod_assignment in invalid_keywords:
         return False    # non-bindable keyword -- ignore
-    elif re.search("^[-?|\d]\d+$", clod_assignment):
+    elif re.search(r"^[-?|\d]\d+$", clod_assignment):
         return False    # multi-digit string for LastFocus field -- ignore
-    elif re.search("^\d+:-?\d+$", clod_assignment):
+    elif re.search(r"^\d+:-?\d+$", clod_assignment):
         return False    # digit:digit string for ChatWindow field -- ignore
     else:
         return True
@@ -236,7 +236,7 @@ def _is_valid_assignment(clod_assignment):
 def _is_valid_binding(clod_binding):
     """Returns false if a non-keyword is found"""
     
-    if re.sub("[-\.\s]","",clod_binding).isdigit():
+    if re.sub(r"[-\.\s]","",clod_binding).isdigit():
         return False    # string of digits for axis sensitivities -- ignore
     else:
         return True
