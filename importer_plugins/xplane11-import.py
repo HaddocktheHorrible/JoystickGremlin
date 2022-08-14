@@ -53,7 +53,7 @@ import argparse
 import gremlin.error
 from gremlin.common import InputType
 
-template_filter = "XPlane 11 Profile (*.prf)"
+import_filter = "XPlane 11 Profile (*.prf)"
 _ignore_unmapped = False
 
 # common data for input types
@@ -190,7 +190,7 @@ def _xp11_item2vjoy_item(xp11_item):
     # match strings for axis or button items defaults
     axis_empty = (_type_data[_axis]["entry_format"]
                  ).format("\d*", _type_data[_axis]["default"])
-    butn_empty = (_type_data[_axis]["entry_format"]
+    butn_empty = (_type_data[_butn]["entry_format"]
                  ).format("\d*", _type_data[_butn]["default"])
     
     # find non empty axes or buttons
@@ -209,11 +209,11 @@ def _parse_entry_of_type(xp11_item, input_type):
     """Parse xplane 11 entry using given type"""
     
     input_type_name = InputType.to_string(input_type)
-    vjoy_map = _type_data[input_type]["joy_map"]
+    vjoy_map = _type_data[input_type]["vjoy_map"]
     
     # get binding, vjoy_id, and input_id
     binding = xp11_item.split()[1]
-    input_id = re.sub("^\D", "",xp11_item.split()[0])
+    input_id = re.sub("^\D*", "",xp11_item.split()[0])
     if input_id in vjoy_map:
         vjoy_id = vjoy_map[input_id]
         first_id = int(_type_data[input_type]["first_id"][vjoy_id])
