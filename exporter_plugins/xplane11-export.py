@@ -63,12 +63,12 @@ _type_data = {
     _axis: {
         "vjoy_map": {}, 
         "default": "0", 
-        "entry_format": "_joy_AXIS_use{} {}"
+        "entry_format": r"_joy_AXIS_use{} {}"
     },
     _butn: {
         "vjoy_map": {}, 
         "default": "sim/none/none", 
-        "entry_format": "_joy_BUTN_use{} {}"
+        "entry_format": r"_joy_BUTN_use{} {}"
     },
 }
 
