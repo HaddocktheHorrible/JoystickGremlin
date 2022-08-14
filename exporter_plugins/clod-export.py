@@ -21,15 +21,13 @@ Arguments example:
     
     -m 1 66210FF9 -m 2 A4E92C9 -i #
                         
-Hint: 
+To find the CLoD ID for each VJoy device, manually bind one VJoy 
+output in CLoD. CLoD will report VJoy device bindings in the format:
 
-    To find the CLoD ID for each VJoy device, manually bind one VJoy 
-    output in CLoD. CLoD will report VJoy device bindings in the format:
-    
-    "vJoy_Device-<CLoD_ID>+Key#=<binding>"
-    
-    You may then register that CLoD_ID with its corresponding VJoy_ID as 
-    described above.
+"vJoy_Device-<CLoD_ID>+Key#=<binding>"
+
+You may then register that CLoD_ID with its corresponding VJoy_ID as 
+described above.
     
 """
 

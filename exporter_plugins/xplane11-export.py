@@ -29,21 +29,19 @@ Arguments example:
     
     -m 1 0 0 -m 2 10 129 -i ? -c
 
-Hint: 
+To find the axis/button start index for each vjoy device, manually 
+bind the VJoy X axis and VJoy Button 1 in XPlane 11 in a new, empty profile.
+Save the profile in XPlane 11, then navigate to the corresponding 
+.prf file on disk. Open the .prf file in a text editor, then search for the 
+first non-empty entry binding (for axes, this is any value other than "0"; 
+for buttons, this is any value other than "sim/none/none"). 
 
-    To find the axis/button start index for each vjoy device, manually 
-    bind the VJoy X axis and VJoy Button 1 in XPlane 11 in a new, empty profile.
-    Save the profile in XPlane 11, then navigate to the corresponding 
-    .prf file on disk. Open the .prf file in a text editor, then search for the 
-    first non-empty entry binding (for axes, this is any value other than "0"; 
-    for buttons, this is any value other than "sim/none/none"). 
+Each entry should look one of the following: 
+    "_joy_AXIS_use<AXIS_use_id>"
+    "_joy_BUTN_use<BUTN_use_id>"
 
-    Each entry should look one of the following: 
-        "_joy_AXIS_use<AXIS_use_id>"
-        "_joy_BUTN_use<BUTN_use_id>"
-
-    You can then enter the <AXIS_use_id> and <BUTN_use_id> as input arguments to 
-    this exporter for the VJoy ID used. Repeat the process for all VJoy devices.
+You can then enter the <AXIS_use_id> and <BUTN_use_id> as input arguments to 
+this exporter for the VJoy ID used. Repeat the process for all VJoy devices.
     
 """
 
