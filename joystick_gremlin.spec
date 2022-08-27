@@ -4,8 +4,8 @@ import os
 
 block_cipher = None
 
-# Properly enumerate all files required for the action_plugins and
-# container_plugins system
+# Properly enumerate all files required for the action_plugins, and
+# container_plugins, exporter_plugins, and importer_plugins systems
 action_plugins_files = []
 for root, _, files in os.walk("action_plugins"):
     for fname in files:
@@ -18,6 +18,18 @@ for root, _, files in os.walk("container_plugins"):
         if fname.endswith(".pyc"):
             continue
         container_plugins_files.append((os.path.join(root, fname), root))
+exporter_plugins_files = []
+for root, _, files in os.walk("exporter_plugins"):
+    for fname in files:
+        if fname.endswith(".pyc"):
+            continue
+        exporter_plugins_files.append((os.path.join(root, fname), root))
+importer_plugins_files = []
+for root, _, files in os.walk("importer_plugins"):
+    for fname in files:
+        if fname.endswith(".pyc"):
+            continue
+        importer_plugins_files.append((os.path.join(root, fname), root))
 
 added_files = [
     ("about", "about"),
@@ -26,6 +38,8 @@ added_files = [
 ]
 added_files.extend(action_plugins_files)
 added_files.extend(container_plugins_files)
+added_files.extend(exporter_plugins_files)
+added_files.extend(importer_plugins_files)
 added_binaries = [
     ("vjoy/vJoyInterface.dll", "."),
     ("dill/dill.dll", "."),
