@@ -72,3 +72,5 @@ following command can be used:
 ```bash
 pyinstaller -y --clean joystick_gremlin.spec
 ```
+
+This returns a distributable version under `dist/joystick_gremlin`. Build details are stored under `build/joystick_gremlin`.
