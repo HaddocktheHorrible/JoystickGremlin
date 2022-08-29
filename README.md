@@ -45,7 +45,9 @@ Joystick Gremlin uses the following software and resources:
 Currently the 32bit version of Python is needed. To create and activate a conda environment with the required modules, simply call:
 
 ```bash
+conda config --env --set subdir win-32
 conda env create -f conda_env.yaml
+conda config --env --remove subdir win-32
 conda activate joystick_gremlin32
 ```
 
