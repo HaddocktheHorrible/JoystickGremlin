@@ -82,11 +82,11 @@ def main(bound_vjoy_dict, template_file, arg_string):
     
     try:
         args = _parse_args(arg_string.split())
-    except gremlin.error.ImporterError as e:
+    except gremlin.error.ExporterError as e:
         raise e
     except:
-        msg = "ArgumentError: bad input arguments. Check importer description for details."
-        raise gremlin.error.ImporterError(msg)
+        msg = "ArgumentError: bad input arguments. Check exporter description for details."
+        raise gremlin.error.ExporterError(msg)
     
     _ignore_flags = args.ignore_flag
     if args.device_map is not None:
