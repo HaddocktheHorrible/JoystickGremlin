@@ -54,7 +54,7 @@ Finally, user arguments to the exporter are included as a single string. This sh
 
 If the exporter runs successfully, Joystick Gremlin expects `main()` to return a list of lines to write to file. Depending on the user export options, the template file provided may be overwritten in-place with the new file contents or the user may be given the option to select a new file to write to (see [Template File Filter](#template-file-filter) for additional info). The output from the exporter is simply written to file with python's `writelines()` function. Note newlines must be included at the end of each line.
 
-If the exporter encounters an error, Joystick Gremlin will throw an exception dialog box and provide a traceback to the user. This is particularly useful when editing and testing new exporters using the Joystick Gremlin GUI (see [Debugging](#debugging) below). However, where possible, the author of the exporter should try to catch possible errors and raise them as a Joystick Gremlin `ExporterError`. Naturally, this gives the author an opportunity to provide a more user-friendly note about the possible cause.
+If the exporter encounters an error, Joystick Gremlin will throw an exception dialog box and provide a traceback to the user. This is particularly useful when editing and testing new exporters using the Joystick Gremlin GUI (see [Debugging](#debugging) below). However, where possible, the author of the exporter should try to catch possible errors and raise them as a Joystick Gremlin `ExporterError`. Naturally, this gives the author an opportunity to provide a more user-friendly note about the possible cause. See any of the built-in exporters for an example usage.
 
 Note if an error is thrown during exporter execution, Joystick Gremlin will continue to run. No changes will be made to the template file, even if the user has chosen to overwrite the file.
 
@@ -114,10 +114,12 @@ Finally, the author may find it useful to allow quoted strings in the input argu
 
 ### Debugging
 
-reloaded on each export
+The easiest way to debug is to run Joystick Gremlin from source in a python build environment. The author may add breakpoints to their script to monitor variables during execution and so on. See the top-level README for instructions about creating a python environment using conda.
 
-Fortu
+As an alternative, the script writer may open the Joystick Gremlin executable, then run their exporter. Joystick Gremlin will report the traceback for any uncaught errors encountered during script execution.
+
+In any case, it is important to know that the exporter script is re-loaded every time the "Export" button is pressed or when a new exporter is selected. The former is useful for debugging as the script can be edited and run again without having to reload Joystick Gremlin entirely. The latter is mostly useful for editing docstring formatting for proper display in the Exporter dialog window.
 
 ### Compatibility Considerations
 
-use of import modules
+The author should be mindful that any imported python modules must be present within the build environment used to compile Joystick Gremlin. For a full list of available packages, see `conda_env.yaml` in the Joystick Gremlin source code root.
