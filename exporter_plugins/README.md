@@ -2,7 +2,7 @@
 
 Joystick Gremlin's exporter feature allows users to write VJoy bindings from the current profile directly to program configuration files. This capability is provided through the addition of program-specific exporter plugins. Builtin plugins are made available to the user through a dropdown in the exporter dialog window. User-made plugins may also be used by manually adding them to the list of know exporters (through the "+" icon to the right of the exporter selection drop-down) or by placing a copy of the exporter within the "exporter_plugins" folder under the Joystick Gremlin installation directory.
 
-Plugins are written in python. The rest of this document is intended to help guide users who wish to write their own exporter plugins. The builtin `clod-export.py` and `xplane11-export.py` follow similar patterns as described here. The user may wish to "follow along" by opening either file.
+Plugins are written in python. The rest of this document is intended to help guide users who wish to write their own exporter plugins. The builtin `clod-export.py` and `xplane11-export.py` follow similar patterns as described here. The user may wish to "follow along" by opening either file. Many of the patterns are shared with importer plugins.
 
 ## Premise
 
@@ -68,7 +68,7 @@ Certain features and quirks to be aware of when creating a new exporter are desc
 
 Joystick Gremlin will display the exporter docstring within the exporter dialog when an exporter is selected. This is updated each time a new exporter is selected. The docstring can be defined as usual for a regular python script within the exporter.
 
-For user readability, Joystick Gremlin will try to adjust the dosctring word wrap to match the dialog box width. Multiple adjacent docstring lines will be "unwrapped" then re-wrapped based on the dialog box width. In this context, "adjacent" means one non-empty line followed by another non-empty line. The second line must not begin with any form of whitespace or it will not be considered adjacent. The first line may end with any number of spaces -- all will be replaced by a single space when the lines are unwrapped. For example:
+For user readability, Joystick Gremlin will try to adjust the docstring word wrap to match the dialog box width. Multiple adjacent docstring lines will be "unwrapped" then re-wrapped based on the dialog box width. In this context, "adjacent" means one non-empty line followed by another non-empty line. The second line must not begin with any form of whitespace or it will not be considered adjacent. The first line may end with any number of spaces -- all will be replaced by a single space when the lines are unwrapped. For example:
 
 ```python
 """This will unwrap to  
@@ -85,7 +85,7 @@ Note paragraph breaks must contain no whitespace to be considered "empty".
 
 ### Template File Filter
 
-To prompt the user for a configuration template file and an output file location, Joystick Gremlin create PyQT `QFileDialog` objects. These support one or more file filters. This allows us to suggest to the user the appropriate file type for the selected exporter script. This is enabled in Joystick Gremlin by defining a single `template_filter` variable within the exporter. This string defines allowable file extensions for both the template file and export file selection dialogs.
+To prompt the user for a configuration template file and an output file location, Joystick Gremlin creates PyQT `QFileDialog` objects. These support one or more file filters. This allows us to suggest to the user the appropriate file type for the selected exporter script. This is enabled in Joystick Gremlin by defining a single `template_filter` variable within the exporter. This string defines allowable file extensions for both the template file and export file selection dialogs.
 
 The `template_filter` string must match the format specified by [`QFileDialog`](https://doc.qt.io/qtforpython-5/PySide2/QtWidgets/QFileDialog.html#detailed-description); that is an optional file type description followed by one or more file search patterns in parenthesis. Multiple file filters must be separated by two semi-colons. For example:
 
