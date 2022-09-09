@@ -2,7 +2,7 @@
 
 Joystick Gremlin's importer feature allows users to populate VJoy bindings from program configuration files directly to the current profile. This capability is provided through the addition of program-specific importer plugins. Builtin plugins are made available to the user through a dropdown in the importer dialog window. User-made plugins may also be used by manually adding them to the list of know importers (through the "+" icon to the right of the importer selection drop-down) or by placing a copy of the importer within the "importer_plugins" folder under the Joystick Gremlin installation directory.
 
-Plugins are written in python. The rest of this document is intended to help guide users who wish to write their own importer plugins. The builtin `clod-import.py` and `xplane11-import.py` follow similar patterns as described here. The user may wish to "follow along" by opening either file.
+Plugins are written in python. The rest of this document is intended to help guide users who wish to write their own importer plugins. The builtin `clod-import.py` and `xplane11-import.py` follow similar patterns as described here. The user may wish to "follow along" by opening either file. Many of the patterns are shared with exporter plugins.
 
 ## Premise
 
@@ -21,30 +21,16 @@ The only function strictly required to be in any importer plugin is `main()`. Th
 1. An argument parser - this is needed to parse the argument string for import options
 2. An importer function - this should return a binding dictionary
 
-Additional functions may be included as needed to prepare binding entry lines and so on.
+Additional functions may be included as needed to parse bindings from input file lines and so on.
 
 ## Input Provided by Joystick Gremlin
 
 ---
 
-<!-- TODO: update this -->
+Two inputs are provided to `main()` by Joystick Gremlin, in the following order:
 
-Three inputs are provided to `main()` by Joystick Gremlin, in the following order:
-
-1. A binding dictionary of copied `BoundVJoy` objects from the current profile
-2. The contents of the chosen import file, as reported by python's `readlines()`
-3. An argument string provided by the user in the import dialog window
-
-The binding dictionary deserves a bit more explanation than the last two. Every key in the binding dictionary is a keybinding string defined within the current profile. Every item in the dictionary corresponds to a `BoundVJoy` object. Every BoundVJoy object contains the following properties:
-
-- binding       : a unique keybinding string
-- vjoy_id       : vjoy id for the associated vjoy device
-- input_id      : the associated vjoy input id
-- vjoy_guid     : windows guid for the associated vjoy device
-- input_type    : a Joystick Gremlin `InputType` object
-- description   : a non-unique description string
-
-All the above can be accessed from each BoundVJoy object with standard dot-indexing (i.e. `binding = BoundVJoy.binding`). Typically, only the `vjoy_id`, `input_id`, and `input_type` properties will be needed to update import file lines with new keybindings.
+1. The contents of the chosen import file, as reported by python's `readlines()`
+2. An argument string provided by the user in the import dialog window
 
 The import file contents are provided to `main()` as the output of python's `readlines()` function. That is, as a list, with one line per entry in that list. Newlines are included at the end of each line.
 
@@ -54,13 +40,33 @@ Finally, user arguments to the importer are included as a single string. This sh
 
 ---
 
-<!-- TODO: update this -->
+If the importer runs successfully, Joystick Gremlin expects `main()` to return a nested binding dictionary. The accessible entries in the dictionary should be as follows:
 
-If the importer runs successfully, Joystick Gremlin expects `main()` to return a list of lines to write to file. Depending on the user import options, the import file provided may be overwritten in-place with the new file contents or the user may be given the option to select a new file to write to (see [Template File Filter](#import-file-filter) for additional info). The output from the importer is simply written to file with python's `writelines()` function. Note newlines must be included at the end of each line.
+```python
+bindings[input_type][binding]["device_id"] = device_id
+bindings[input_type][binding]["input_id"] = input_id
+bindings[input_type][binding]["description"] = description
+```
+
+Every dictionary is initially keyed by one of several input type strings. At this time, bindings are only supported for "axis" or "button" input types. If an unknown type is given, an error will be thrown during import.
+
+The next layer down is keyed with the binding strings themselves. These should correspond to the keybindings defined in the imported configuration file. They will be populated into VJoy inputs during import by Joystick Gremlin.
+
+Each binding has three optional attributes associated with it:
+
+1. A device ID: this should correspond to a target VJoy ID
+2. An input ID: this should correspond to a target VJoy input number
+3. A description: a string
+
+If no device or input ID is chosen for the binding, both will be assigned to the first available during import. If no description is defined, it will simply be left blank. Note, although these are optional, empty strings ("") must be included to preserve the dictionary structure. If any of these three attributes cannot be found during import, an error will be thrown.
+
+>DESCRIPTION RETENTION: Often descriptions are not stored in program config files themselves. Instead, they are defined in external helper files or community-compiled files. Because of this, if a binding present in the profile has an existing description defined, importing from a config file where that description is missing will NOT clear the description attribute. This means that users could import a list of possible bindings and their descriptions, then subsequently match bindings to VJoy inputs by importing a separate config file. The binding descriptions imported from the first step would be retained during import in the second step.
 
 If the importer encounters an error, Joystick Gremlin will throw an exception dialog box and provide a traceback to the user. This is particularly useful when editing and testing new importers using the Joystick Gremlin GUI (see [Debugging](#debugging) below). However, where possible, the author of the importer should try to catch possible errors and raise them as a Joystick Gremlin `ImporterError`. Naturally, this gives the author an opportunity to provide a more user-friendly note about the possible cause. See any of the built-in importers for an example usage.
 
 Note if an error is thrown during importer execution, Joystick Gremlin will continue to run. No changes will be made to the import file, even if the user has chosen to overwrite the file.
+
+Status messages are written to the Joystick Gremlin log file as bindings are applied to the current profile. These will identify if the imported `device_id` or `input_id` could not be applied (in which case they will be replaced with the first available). Additionally, any existing bindings which were overwritten during import will be listed.
 
 ## Tips and Best Practices
 
@@ -72,7 +78,7 @@ Certain features and quirks to be aware of when creating a new importer are desc
 
 Joystick Gremlin will display the importer docstring within the importer dialog when an importer is selected. This is updated each time a new importer is selected. The docstring can be defined as usual for a regular python script within the importer.
 
-For user readability, Joystick Gremlin will try to adjust the dosctring word wrap to match the dialog box width. Multiple adjacent docstring lines will be "unwrapped" then re-wrapped based on the dialog box width. In this context, "adjacent" means one non-empty line followed by another non-empty line. The second line must not begin with any form of whitespace or it will not be considered adjacent. The first line may end with any number of spaces -- all will be replaced by a single space when the lines are unwrapped. For example:
+For user readability, Joystick Gremlin will try to adjust the docstring word wrap to match the dialog box width. Multiple adjacent docstring lines will be "unwrapped" then re-wrapped based on the dialog box width. In this context, "adjacent" means one non-empty line followed by another non-empty line. The second line must not begin with any form of whitespace or it will not be considered adjacent. The first line may end with any number of spaces -- all will be replaced by a single space when the lines are unwrapped. For example:
 
 ```python
 """This will unwrap to  
@@ -87,11 +93,9 @@ will be on its own line:
 
 Note paragraph breaks must contain no whitespace to be considered "empty".
 
-### Template File Filter
+### Import File Filter
 
-<!-- TODO: update this -->
-
-To prompt the user for a configuration import file and an output file location, Joystick Gremlin create PyQT `QFileDialog` objects. These support one or more file filters. This allows us to suggest to the user the appropriate file type for the selected importer script. This is enabled in Joystick Gremlin by defining a single `import_filter` variable within the importer. This string defines allowable file extensions for both the import file and import file selection dialogs.
+To prompt the user for a configuration file to import, Joystick Gremlin creates PyQT `QFileDialog` objects. These support one or more file filters. This allows us to suggest to the user the appropriate file type for the selected importer script. This is enabled in Joystick Gremlin by defining a single `import_filter` variable within the importer. This string defines allowable file extensions for both the import file and import file selection dialogs.
 
 The `import_filter` string must match the format specified by [`QFileDialog`](https://doc.qt.io/qtforpython-5/PySide2/QtWidgets/QFileDialog.html#detailed-description); that is an optional file type description followed by one or more file search patterns in parenthesis. Multiple file filters must be separated by two semi-colons. For example:
 
