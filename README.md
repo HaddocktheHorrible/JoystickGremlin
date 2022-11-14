@@ -1,8 +1,8 @@
-Joystick Gremlin
-================
+# Joystick Gremlin
 
-Introduction
-------------
+## Introduction
+
+---
 
 **Getting Help:** If you have issues running Gremlin or questions on how to
 make certain things work, the best place to ask for help is in the
@@ -20,6 +20,7 @@ managing joysticks, Joystick Gremlin also provides keyboard macros, a flexible
 mode system, scripting using Python, and many other features.
 
 The main features are:
+
 - Works with arbitrary joystick like devices
 - User interface for common configuration tasks
 - Merging of multiple physical devices into a single virtual device
@@ -31,11 +32,12 @@ The main features are:
 Joystick Gremlin provides a graphical user interface which allows commonly
 performed tasks, such as input remapping, axis response curve setups, and macro
 recording to be performed easily. Functionality that is not accessible via the
-UI can be implemented through custom modules. 
+UI can be implemented through custom modules.
 
+## Used Software & Other Sources
 
-Used Software & Other Sources
------------------------------
+---
+
 Joystick Gremlin uses the following software and resources:
 
 - [pyinstaller](http://www.pyinstaller.org/)
@@ -45,14 +47,18 @@ Joystick Gremlin uses the following software and resources:
 - [Python 3.4](https://www.python.org)
 - [Modern UI Icons](http://modernuiicons.com/)
 
-Currently the 32bit version of Python is needed and the following packages should be installed via PiP to get the source running:
- 
- - PyQT5
- - pypiwin32
- 
+Currently the 32bit version of Python is needed. To create and activate a conda environment with the required modules, simply call:
 
-Generating the MSI Installer
-----------------------------
+```bash
+conda config --env --set subdir win-32
+conda env create -f conda_env.yaml
+conda config --env --remove subdir win-32
+conda activate joystick_gremlin32
+```
+
+## Generating the MSI Installer
+
+---
 
 The job of turning the Python code in a windows executable and
 packaging everything up into an installable MSI file is performed
@@ -60,11 +66,18 @@ by [pyinstaller](http://www.pyinstaller.org/) and
 [wix](http://wixtoolset.org/). The steps needed to build the code
 and assemble it into the installer is automated using a batch
 script and can be run as:
-  ```
-  deploy.bat
-  ```
+
+```powershell
+deploy.bat
+```
+
+**Note:** This does not play nicely with the conda environment created above. Update TBD...
+
 To simply generate the executable code without the MSI installer the
 following command can be used:
-  ```
-  pyinstaller -y --clean joystick_gremlin.spec
-  ```
+
+```bash
+pyinstaller -y --clean joystick_gremlin.spec
+```
+
+This returns a distributable version under `dist/joystick_gremlin`. Build details are stored under `build/joystick_gremlin`.
