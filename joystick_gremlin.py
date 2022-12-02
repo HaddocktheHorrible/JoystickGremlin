@@ -893,6 +893,7 @@ class GremlinUi(QtWidgets.QMainWindow):
         :param mode the now current mode
         """
         self.status_bar_mode.setText("<b>Mode:</b> {}".format(mode))
+        self.ui.tray_icon.setToolTip(mode)
         if self.config.mode_change_message:
             self.ui.tray_icon.showMessage(
                 "Mode: {}".format(mode),
