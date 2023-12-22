@@ -1,4 +1,4 @@
-"""Populates bindings from IL-2 CLoD config file to current Profile
+"""Populates bindings from IL-2: Cliffs of Dover (CLoD) config file to current Profile
 
 Lines starting in "[" or ";" are ignored. Config entries that do not
 relate to key bindings (such as "difficulty"; axis sensitivity and
