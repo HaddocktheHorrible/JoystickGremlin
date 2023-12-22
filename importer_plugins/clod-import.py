@@ -193,6 +193,9 @@ def _clod_item2vjoy_item(clod_item):
     if clod_input in _axis_string_to_id:
         input_type = "axis"
         input_id = _axis_string_to_id[clod_input]
+    elif "AXE" in clod_input:
+        input_type = "axis"
+        input_id = ""
     elif "Key" in clod_input:
         input_type = "button"
         input_id = int(clod_input.split("Key")[-1])
