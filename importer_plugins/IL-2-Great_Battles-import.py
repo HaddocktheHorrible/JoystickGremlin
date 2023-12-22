@@ -257,7 +257,7 @@ def _box_item2vjoy_item(box_item):
             input_id   = ""
         elif "b" in box_input:
             input_type = "button"
-            input_id = int(box_input.strip("b"))
+            input_id = int(box_input.strip("b")) + 1
         elif "pov" in box_input:
             input_type = "button"
             input_id = "" # bindings don't support hats, so assign to button
