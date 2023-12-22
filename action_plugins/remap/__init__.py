@@ -171,7 +171,7 @@ class RemapWidget(gremlin.ui.input_item.AbstractActionWidget):
         if input_id in [0, None] or vjoy_id in [0, None]:
             raise gremlin.error.GremlinError((
                 "No VJoy device with '{}' type output found! "
-                "Cannot create remap.").format(input_type.to_string))
+                "Cannot create remap.").format(input_type.to_string(input_type)))
 
         # assign to selector
         try:
