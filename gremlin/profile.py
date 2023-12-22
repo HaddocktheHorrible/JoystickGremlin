@@ -1920,7 +1920,7 @@ class Profile:
                             "Cannot assign binding '{:s}'! "
                             "Not enough unbound VJoy inputs of type '{:s}'. "
                             "Skipping..."
-                            ).format(binding, input_type.to_string)
+                            ).format(binding, input_type.to_string(input_type))
                         )
                         count["error"] += 1
                 elif description: # update description of skipped bindings if a new description was given
