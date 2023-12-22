@@ -1,4 +1,4 @@
-"""Populates profile bindings to IL-2 CLoD config file from template.
+"""Populates profile bindings to IL-2: Cliffs of Dover (CLoD) config file from template.
 
 Optional arguments:
 
