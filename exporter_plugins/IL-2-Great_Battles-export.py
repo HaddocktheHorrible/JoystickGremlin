@@ -49,6 +49,12 @@ Tips:
 
     within your IL-2: Great Battles installation directory.
 
+(3) Gremlin VJoy assignments are listed as the first entry in cases
+    where multiple assignments exist.
+
+(4) Custom binding descriptions, if set in Joystick Gremlin, will be
+    replaced in the .actions file by the IL-2 defaults upon load into IL-2. 
+
 """
 
 import argparse
@@ -207,10 +213,14 @@ def _export(bound_vjoy_dict, template_file):
                     continue # don't write invalid line if a prior binding line exists
         newfile.append(line + "\n")
             
-    # append unsorted bindings to file
-    newfile.append("\n// Unsorted Gremlin Bindings\n")
+    # append bindings not found in template to file
+    # IL-2 will re-sort these when the profile is sorted
     for bound_item in bound_vjoy_dict.values():
         newfile.append(_vjoy_item2box_item(bound_item) + "\n")
+        
+    # strip last newline
+    # this causes IL-2 to hang on profile load otherwise
+    newfile[-1] = newfile[-1].strip()
         
     return newfile
 
